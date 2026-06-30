@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+</head>
+<body>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <div class="oe_span12">
+            <h2 class="oe_slogan">ShippingBo Connector</h2>
+            <h3 class="oe_slogan">Sync your Odoo stock and orders with ShippingBo</h3>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container oe_dark">
+    <div class="oe_row oe_spaced">
+        <div class="oe_span12">
+            <h3 class="oe_slogan">Key Features</h3>
+        </div>
+        <div class="oe_span4">
+            <div class="oe_demo oe_picture oe_screenshot">
+                <h4>Nightly Stock Sync</h4>
+                <p>
+                    Automatically synchronize stock quantities from ShippingBo to Odoo
+                    every night via a scheduled job. No manual export/import required.
+                </p>
+            </div>
+        </div>
+        <div class="oe_span4">
+            <div class="oe_demo oe_picture oe_screenshot">
+                <h4>Order Push</h4>
+                <p>
+                    Send sale orders to ShippingBo with shipping and billing addresses
+                    resolved automatically.
+                </p>
+            </div>
+        </div>
+        <div class="oe_span4">
+            <div class="oe_demo oe_picture oe_screenshot">
+                <h4>OAuth2 Authentication</h4>
+                <p>
+                    Connects to ShippingBo using OAuth2. Tokens are refreshed automatically
+                    so your integration never breaks due to expired credentials.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <div class="oe_span12">
+            <h3 class="oe_slogan">How It Works</h3>
+            <ol>
+                <li>Go to <strong>Settings &gt; ShippingBo</strong> and fill in your API credentials (Client ID, Client Secret, App ID, Redirect URI, Refresh Token).</li>
+                <li>Select the Odoo stock location that ShippingBo manages.</li>
+                <li>The scheduled job runs nightly and updates Odoo stock quantities to match ShippingBo.</li>
+                <li>Use the provided methods (<code>send_to_shippingbo</code>, <code>update_shippingbo_state</code>, <code>update_shippingbo_items</code>) in your own flows to push orders to ShippingBo.</li>
+            </ol>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container oe_dark">
+    <div class="oe_row oe_spaced">
+        <div class="oe_span12">
+            <h3 class="oe_slogan">Configuration</h3>
+            <p>All configuration is done from <strong>Settings &gt; ShippingBo</strong>:</p>
+            <ul>
+                <li><strong>Client ID / Client Secret</strong> — from your ShippingBo developer app</li>
+                <li><strong>App ID</strong> — required header for ShippingBo API calls</li>
+                <li><strong>Redirect URI</strong> — must match the URI registered in ShippingBo</li>
+                <li><strong>Refresh Token</strong> — obtained once via OAuth2 authorization; auto-renewed thereafter</li>
+                <li><strong>Stock Location</strong> — the Odoo internal location to synchronize</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <div class="oe_span12">
+            <h3 class="oe_slogan">Support</h3>
+            <p>
+                For questions or support, contact us at
+                <a href="mailto:stanislas@catalyt.fr">stanislas@catalyt.fr</a>
+                or visit <a href="https://catalyt.fr">catalyt.fr</a>.
+            </p>
+        </div>
+    </div>
+</section>
+
+</body>
+</html>

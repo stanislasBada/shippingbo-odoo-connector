@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_shippingbo" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.shippingbo</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+            <app data-string="ShippingBo" string="ShippingBo" name="shippingbo_connector">
+                <block title="API Credentials">
+                    <setting string="Client ID">
+                        <field name="shippingbo_client_id" placeholder="your-client-id"/>
+                    </setting>
+                    <setting string="Client Secret">
+                        <field name="shippingbo_client_secret" password="True"/>
+                    </setting>
+                    <setting string="App ID">
+                        <field name="shippingbo_app_id"/>
+                    </setting>
+                    <setting string="Redirect URI">
+                        <field name="shippingbo_redirect_uri" placeholder="https://your-odoo.example.com/"/>
+                    </setting>
+                    <setting string="Refresh Token" help="Initial token from the ShippingBo OAuth2 authorization flow. Refreshed automatically.">
+                        <field name="shippingbo_refresh_token" password="True"/>
+                    </setting>
+                </block>
+                <block title="Stock Synchronization">
+                    <setting string="Stock Location" help="Location used as source for the nightly ShippingBo stock sync.">
+                        <field name="shippingbo_stock_location_id"
+                               domain="[('usage', '=', 'internal')]"
+                               options="{'no_create': True}"/>
+                    </setting>
+                </block>
+            </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

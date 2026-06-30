@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ir_cron_shippingbo_stock_sync" model="ir.cron">
+        <field name="name">ShippingBo - Stock Synchronization</field>
+        <field name="model_id" ref="shippingbo_connector.model_shippingbo_api"/>
+        <field name="state">code</field>
+        <field name="code">model.sync_stock_from_shippingbo()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+    </record>
+</odoo>
