@@ -31,6 +31,18 @@
                                options="{'no_create': True}"/>
                     </setting>
                 </block>
+                <block title="Deliveries">
+                    <setting string="Auto-send ready deliveries"
+                             help="Envoyer automatiquement le BL à Shippingbo dès qu'il est prêt (réservé).">
+                        <field name="shippingbo_auto_send_on_ready"/>
+                    </setting>
+                    <setting string="Carrier Mapping"
+                             help="Correspondance entre transporteurs Odoo et Shippingbo.">
+                        <button name="%(shippingbo_connector.action_shippingbo_carrier_mapping)d"
+                                type="action" string="Mapping transporteurs"
+                                icon="oi-arrow-right" class="btn-link"/>
+                    </setting>
+                </block>
             </app>
             </xpath>
         </field>
