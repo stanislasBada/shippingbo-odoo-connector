@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_template_property_form_shippingbo" model="ir.ui.view">
+        <field name="name">product.template.form.shippingbo</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="stock.view_template_property_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='inventory']" position="inside">
+                <group string="Shippingbo" name="shippingbo" invisible="not is_storable">
+                    <field name="shippingbo_stock_sync"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_template_search_view_shippingbo" model="ir.ui.view">
+        <field name="name">product.template.search.shippingbo</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_search_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='filter_to_sell']" position="before">
+                <filter string="Stock synchro Shippingbo" name="shippingbo_stock_sync"
+                        domain="[('shippingbo_stock_sync', '=', True)]"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

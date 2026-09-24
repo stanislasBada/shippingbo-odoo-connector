@@ -71,6 +71,8 @@ class ShippingboApi(models.AbstractModel):
 
     @api.model
     def sync_stock_from_shippingbo(self):
+        """Shippingbo fait foi : aligne le stock Odoo des articles cochés
+        « Stock synchronisé Shippingbo » sur le stock Shippingbo."""
         _logger.info('=== Starting ShippingBo -> Odoo stock sync ===')
 
         location_id_str = self.env['ir.config_parameter'].sudo().get_param(
@@ -83,52 +85,73 @@ class ShippingboApi(models.AbstractModel):
             )
             return
 
-        location_id = int(location_id_str)
-
-        quants = self.env['stock.quant'].sudo().search([
-            ('location_id', '=', location_id),
-            ('product_id.active', '=', True),
-            ('product_id.default_code', '!=', False),
-            ('lot_id', '=', False),
+        location = self.env['stock.location'].sudo().browse(int(location_id_str))
+        Quant = self.env['stock.quant'].sudo()
+        products = self.env['product.product'].sudo().search([
+            ('product_tmpl_id.shippingbo_stock_sync', '=', True),
+            ('is_storable', '=', True),
+            ('default_code', '!=', False),
         ])
+        _logger.info('%d product(s) flagged for ShippingBo stock sync', len(products))
 
-        _logger.info('%d product(s) found in location %d', len(quants), location_id)
+        success, skipped, errors = 0, 0, 0
 
-        success, errors = 0, 0
+        for product in products:
+            ref = product.default_code
+            if product.tracking != 'none':
+                _logger.warning('[%s] tracked by lot/serial — skipped', ref)
+                skipped += 1
+                continue
 
-        for quant in quants:
-            ref = quant.product_id.default_code
             result = self._shippingbo_request(
                 'GET', f'/products?search[user_ref__eq]={ref}'
             )
-
-            products = result.get('products', [])
-            if not products:
+            sbo_products = result.get('products', [])
+            if not sbo_products:
                 _logger.warning("Product '%s' not found in ShippingBo", ref)
                 errors += 1
                 continue
 
-            shippingbo_qty = float(products[0].get('stock', 0))
-            current_qty = quant.quantity
+            shippingbo_qty = float(sbo_products[0].get('stock', 0))
+            current_qty = sum(Quant.search([
+                ('product_id', '=', product.id),
+                ('location_id', 'child_of', location.id),
+            ]).mapped('quantity'))
             delta = shippingbo_qty - current_qty
-
-            if delta == 0:
-                _logger.debug('No change for %s (%.0f units)', ref, current_qty)
+            if product.uom_id.is_zero(delta):
                 continue
 
             try:
-                self.env['stock.quant'].sudo()._update_available_quantity(
-                    product_id=quant.product_id,
-                    location_id=quant.location_id,
-                    quantity=delta,
-                )
+                with self.env.cr.savepoint():
+                    # Ajustement d'inventaire (tracé) sur l'emplacement principal,
+                    # le quant est créé s'il n'existe pas encore.
+                    InvQuant = Quant.with_context(inventory_mode=True)
+                    quant = InvQuant.search([
+                        ('product_id', '=', product.id),
+                        ('location_id', '=', location.id),
+                        ('lot_id', '=', False),
+                        ('package_id', '=', False),
+                        ('owner_id', '=', False),
+                    ], limit=1)
+                    if quant:
+                        quant.inventory_quantity = quant.quantity + delta
+                    else:
+                        quant = InvQuant.create({
+                            'product_id': product.id,
+                            'location_id': location.id,
+                            'inventory_quantity': delta,
+                        })
+                    quant.action_apply_inventory()
                 _logger.info(
                     '[%s] %s: %.0f -> %.0f units',
-                    ref, quant.product_id.name, current_qty, shippingbo_qty,
+                    ref, product.name, current_qty, shippingbo_qty,
                 )
                 success += 1
             except Exception as e:
-                _logger.error('Error updating quant for [%s]: %s', ref, str(e))
+                _logger.error('Error updating stock for [%s]: %s', ref, str(e))
                 errors += 1
 
-        _logger.info('=== Sync complete: %d success / %d errors ===', success, errors)
+        _logger.info(
+            '=== Sync complete: %d updated / %d skipped / %d errors ===',
+            success, skipped, errors,
+        )

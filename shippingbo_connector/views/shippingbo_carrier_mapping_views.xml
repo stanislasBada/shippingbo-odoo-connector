@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="shippingbo_carrier_mapping_view_list" model="ir.ui.view">
+        <field name="name">shippingbo.carrier.mapping.list</field>
+        <field name="model">shippingbo.carrier.mapping</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="odoo_carrier_id"/>
+                <field name="shippingbo_carrier_name"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="shippingbo_carrier_mapping_view_form" model="ir.ui.view">
+        <field name="name">shippingbo.carrier.mapping.form</field>
+        <field name="model">shippingbo.carrier.mapping</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="odoo_carrier_id"/>
+                        <field name="shippingbo_carrier_name"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_shippingbo_carrier_mapping" model="ir.actions.act_window">
+        <field name="name">Mapping transporteurs</field>
+        <field name="res_model">shippingbo.carrier.mapping</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'active_test': False}</field>
+    </record>
+
+    <menuitem id="menu_shippingbo_root"
+              name="Shippingbo"
+              parent="base.menu_administration"
+              sequence="90"
+              groups="base.group_system"/>
+    <menuitem id="menu_shippingbo_carrier_mapping"
+              name="Mapping transporteurs"
+              parent="menu_shippingbo_root"
+              action="action_shippingbo_carrier_mapping"
+              sequence="10"/>
+</odoo>
