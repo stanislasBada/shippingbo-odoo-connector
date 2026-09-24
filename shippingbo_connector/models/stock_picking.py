@@ -575,7 +575,7 @@ class StockPicking(models.Model):
         if not self.shippingbo_order_id:
             return
         res = self.sale_id.update_shippingbo_state(
-            self.shippingbo_order_id, "cancelled"
+            self.shippingbo_order_id, "canceled"
         )
         if res.get("detail") == "error":
             self.message_post(body="Shippingbo : annulation échouée.")
