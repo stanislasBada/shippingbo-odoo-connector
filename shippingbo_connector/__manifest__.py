@@ -14,6 +14,7 @@
         "views/stock_picking_views.xml",
         "views/product_template_views.xml",
         "data/stock_sync_cron.xml",
+        "data/product_sync_cron.xml",
     ],
     "images": ["static/description/icon.png"],
     "price": 99.0,

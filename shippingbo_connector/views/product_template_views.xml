@@ -24,4 +24,27 @@
             </xpath>
         </field>
     </record>
+
+    <record id="product_variant_easy_edit_view_shippingbo" model="ir.ui.view">
+        <field name="name">product.product.variant.form.shippingbo</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_variant_easy_edit_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="Shippingbo" name="shippingbo">
+                    <field name="shippingbo_product_id" readonly="1"/>
+                    <field name="shippingbo_last_sync" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_shippingbo_sync_products" model="ir.actions.server">
+        <field name="name">Synchroniser vers Shippingbo</field>
+        <field name="model_id" ref="product.model_product_template"/>
+        <field name="binding_model_id" ref="product.model_product_template"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">records.action_shippingbo_sync_products()</field>
+    </record>
 </odoo>
