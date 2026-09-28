@@ -10,6 +10,6 @@ class ProductTemplate(models.Model):
         help="Le stock de cet article est piloté par Shippingbo : le cron de synchronisation "
              "écrase la quantité Odoo par celle de Shippingbo.",
     )
+
     def action_shippingbo_sync_products(self):
-        """Action serveur : synchronise immédiatement les variantes vers Shippingbo."""
-        self.with_context(active_test=False).product_variant_ids._shippingbo_sync_products(force=True)
+        self.product_variant_ids._shippingbo_sync_products(force=True)

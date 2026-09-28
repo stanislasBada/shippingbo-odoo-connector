@@ -9,10 +9,9 @@ _logger = logging.getLogger(__name__)
 
 class ShippingboWebhook(http.Controller):
 
-    # TODO: authentification (signature / token) à ajouter dans une version ultérieure.
     @http.route("/shippingbo/webhook", type="http", auth="public", methods=["POST"], csrf=False)
     def handle(self, **kwargs):
-        """Réception des webhooks Shippingbo. Retourne toujours 200."""
+        """Always answer 200 so that Shippingbo does not retry."""
         raw_body = request.httprequest.get_data()
         try:
             payload = json.loads(raw_body or b"{}")

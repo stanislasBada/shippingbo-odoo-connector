@@ -2,10 +2,6 @@ from odoo import fields, models
 
 
 class ShippingboCarrierMapping(models.Model):
-    """Table de correspondance transporteurs Odoo ↔ Shippingbo.
-
-    Configurable par le client depuis Settings > Shippingbo.
-    """
     _name = "shippingbo.carrier.mapping"
     _description = "Shippingbo Carrier Mapping"
     _order = "odoo_carrier_id"

@@ -5,7 +5,7 @@ class StockMove(models.Model):
     _inherit = "stock.move"
 
     def _action_assign(self, *args, **kwargs):
-        """Envoi automatique vers Shippingbo quand le BL passe à l'état prêt."""
+        """Auto-send outgoing pickings to Shippingbo once they are ready."""
         res = super()._action_assign(*args, **kwargs)
         if self.env.context.get("shippingbo_skip_auto_send"):
             return res

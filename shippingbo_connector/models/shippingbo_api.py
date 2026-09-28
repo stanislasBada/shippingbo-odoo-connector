@@ -71,8 +71,7 @@ class ShippingboApi(models.AbstractModel):
 
     @api.model
     def sync_stock_from_shippingbo(self):
-        """Shippingbo fait foi : aligne le stock Odoo des articles cochés
-        « Stock synchronisé Shippingbo » sur le stock Shippingbo."""
+        """Align Odoo on-hand quantities with Shippingbo, which is the source of truth."""
         _logger.info('=== Starting ShippingBo -> Odoo stock sync ===')
 
         location_id_str = self.env['ir.config_parameter'].sudo().get_param(
@@ -123,8 +122,6 @@ class ShippingboApi(models.AbstractModel):
 
             try:
                 with self.env.cr.savepoint():
-                    # Ajustement d'inventaire (tracé) sur l'emplacement principal,
-                    # le quant est créé s'il n'existe pas encore.
                     InvQuant = Quant.with_context(inventory_mode=True)
                     quant = InvQuant.search([
                         ('product_id', '=', product.id),

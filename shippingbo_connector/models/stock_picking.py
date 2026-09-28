@@ -5,8 +5,7 @@ from odoo import api, fields, models
 
 _logger = logging.getLogger(__name__)
 
-# Statuts de commande Shippingbo → shippingbo_state Odoo.
-# Les statuts inconnus sont tracés dans le chatter sans modifier le champ.
+# Unknown states are posted in the chatter without changing shippingbo_state.
 SHIPPINGBO_ORDER_STATE_MAP = {
     "waiting_for_payment":  "transmitted",
     "waiting_for_stock":    "transmitted",
@@ -26,10 +25,6 @@ SHIPPINGBO_ORDER_STATE_MAP = {
 
 class StockPicking(models.Model):
     _inherit = "stock.picking"
-
-    # ------------------------------------------------------------------
-    # Champs Shippingbo
-    # ------------------------------------------------------------------
 
     shippingbo_order_id = fields.Integer(
         string="Shippingbo Order ID",
@@ -70,17 +65,12 @@ class StockPicking(models.Model):
         help="Date à partir de laquelle Shippingbo peut expédier cette commande.",
     )
 
-    # ------------------------------------------------------------------
-    # Points d'entrée publics (bouton / server action / auto)
-    # ------------------------------------------------------------------
-
     def action_send_to_shippingbo(self):
-        """Bouton / server action : envoie ce BL vers Shippingbo."""
         for picking in self:
             picking._send_to_shippingbo()
 
     def _shippingbo_auto_send(self):
-        """Envoi automatique (BL prêt) : une erreur ne doit pas bloquer la réservation."""
+        """Failures must not block the reservation that triggered the send."""
         self.ensure_one()
         try:
             with self.env.cr.savepoint():
@@ -90,15 +80,7 @@ class StockPicking(models.Model):
             self.message_post(body="Shippingbo : envoi automatique échoué — %s" % e)
             self.write({"shippingbo_state": "error"})
 
-    # ------------------------------------------------------------------
-    # Construction et envoi
-    # ------------------------------------------------------------------
-
     def _send_to_shippingbo(self):
-        """Construit le payload et envoie le BL vers Shippingbo.
-
-        Anti-doublon : si shippingbo_order_id est déjà posé, on ne renvoie pas.
-        """
         self.ensure_one()
         so = self.sale_id
         if not so:
@@ -123,11 +105,9 @@ class StockPicking(models.Model):
         self._process_send_response(response, items_meta)
 
     def _build_shippingbo_payload(self, so):
-        """Construit le payload Shippingbo à partir des mouvements de ce BL.
+        """Return (payload, items_meta_by_source_ref).
 
-        Gère la répartition colis + unités (carton_ref / units_per_carton).
-        Les prix sont repris de la ligne de commande liée, au prorata de la qté du mouvement.
-        Retourne (payload_dict, items_meta_by_source_ref).
+        Moves with a carton reference are split into carton and unit lines.
         """
         order_items_attributes = []
         items_meta_by_source_ref = {}
@@ -149,8 +129,6 @@ class StockPicking(models.Model):
             line_price_cents, line_tax_cents = self._move_price_cents(sale_line, qty)
 
             carton_ref, units_per_carton = self._shippingbo_carton_info(product)
-
-            # --- Pas de conditionnement ou qté insuffisante : ligne simple ---
             if not carton_ref or units_per_carton <= 0 or qty < units_per_carton:
                 order_items_attributes.append(self._item_line(
                     source_ref=move.id,
@@ -166,8 +144,6 @@ class StockPicking(models.Model):
                     "product_id": product.id, "units": 1
                 }
                 continue
-
-            # --- Répartition colis + unités restantes ---
             n_cartons = qty // units_per_carton
             remaining = qty % units_per_carton
             carton_units = n_cartons * units_per_carton
@@ -205,15 +181,9 @@ class StockPicking(models.Model):
                 items_meta_by_source_ref["%s-UNITE" % move.id] = {
                     "product_id": product.id, "units": 1
                 }
-
-        # --- Adresses ---
         shipping = self._build_address(self.partner_id or so.partner_shipping_id)
         billing  = self._build_address(so.partner_invoice_id)
-
-        # --- Carrier Shippingbo (mapping configurable) ---
         mapped_carrier = self._get_shippingbo_carrier_name()
-
-        # --- Date de préparation ---
         earliest = None
         if self.shippingbo_earliest_ship_date:
             earliest = self.shippingbo_earliest_ship_date.isoformat()
@@ -227,7 +197,6 @@ class StockPicking(models.Model):
                 "origin_created_at": so.date_order.isoformat(),
                 "earliest_shipped_at": earliest,
                 "payment_medium": so.payment_term_id.name if so.payment_term_id else "unknown",
-                # Totaux de la commande (frais de port inclus), comme avant
                 "total_price_cents":    int(so.amount_total * 100),
                 "total_price_currency": currency,
                 "total_tax_cents":      int(so.amount_tax * 100),
@@ -245,30 +214,23 @@ class StockPicking(models.Model):
 
         return payload, items_meta_by_source_ref
 
-    # ------------------------------------------------------------------
-    # Champs spécifiques client (optionnels)
-    # Les champs Studio ci-dessous viennent du projet Etoilium : s'ils n'existent
-    # pas sur la base, le connecteur envoie des lignes simples sans point relais.
-    # Surchargeable par un module client pour d'autres sources.
-    # ------------------------------------------------------------------
-
     @staticmethod
     def _shippingbo_optional_field(record, fname, default=False):
         return record[fname] if fname in record._fields else default
 
     def _shippingbo_carton_info(self, product):
-        """Retourne (référence colis Shippingbo, unités par colis) ou (False, 0)."""
+        """Return (carton product_ref, units per carton), or (False, 0). Override to customize."""
         carton_ref = self._shippingbo_optional_field(product, "x_studio_reference_colis_shippingbo")
         units = self._shippingbo_optional_field(product, "x_studio_unites_par_colis", 0)
         return carton_ref or False, int(units or 0)
 
     def _shippingbo_relay_ref(self):
-        """Identifiant du point relais, ou None."""
+        """Override to customize."""
         return self._shippingbo_optional_field(self, "x_studio_id_point_relais") or None
 
     @staticmethod
     def _move_price_cents(sale_line, qty):
-        """Prix TTC et taxe (en centimes) pour qty unités de la ligne de commande."""
+        """Tax-included price and tax, in cents, for qty units of the sale line."""
         if not sale_line or not sale_line.product_uom_qty:
             return 0, 0
         ratio = qty / sale_line.product_uom_qty
@@ -276,12 +238,7 @@ class StockPicking(models.Model):
         tax_cents = int(round((sale_line.price_total - sale_line.price_subtotal) * ratio * 100))
         return price_cents, tax_cents
 
-    # ------------------------------------------------------------------
-    # Traitement de la réponse d'envoi
-    # ------------------------------------------------------------------
-
     def _process_send_response(self, response, items_meta_by_source_ref):
-        """Parse la réponse Shippingbo, stocke l'ID et construit items_map."""
         self.ensure_one()
 
         if isinstance(response, str):
@@ -294,14 +251,12 @@ class StockPicking(models.Model):
             self.message_post(body="Shippingbo : réponse inattendue — %s" % response)
             return
 
-        # Chercher l'ID dans les différentes structures possibles de la réponse
         shippingbo_id = (
             response.get("id")
             or (response.get("order") or {}).get("id")
             or (response.get("object") or {}).get("id")
         )
 
-        # Récupérer les order_items retournés pour construire la table de correspondance
         returned_items = (
             response.get("order_items")
             or (response.get("order") or {}).get("order_items")
@@ -343,17 +298,10 @@ class StockPicking(models.Model):
             )
             self.write({"shippingbo_state": "error"})
 
-    # ------------------------------------------------------------------
-    # Dispatch des webhooks (appelés par le controller)
-    # ------------------------------------------------------------------
-
     @api.model
     def _shippingbo_dispatch_shipment(self, shipment):
-        """Route un event Shipment vers le bon BL.
-
-        - shipment déjà traité (même shipment_id) → mise à jour tracking seule
-        - sinon → premier BL ouvert (non fait / non annulé) de la commande Shippingbo
-        """
+        """An already processed shipment only updates tracking; otherwise it
+        validates the first open picking of the Shippingbo order."""
         order_id = shipment.get("order_id")
         shipment_id = shipment.get("id")
         if not order_id:
@@ -386,7 +334,6 @@ class StockPicking(models.Model):
 
     @api.model
     def _shippingbo_dispatch_order(self, order):
-        """Met à jour shippingbo_state depuis un event Order (changement de statut)."""
         order_id = order.get("id")
         remote_state = order.get("state")
         if not order_id or not remote_state:
@@ -402,25 +349,13 @@ class StockPicking(models.Model):
                 picking.write({"shippingbo_state": state})
             picking.message_post(body="Shippingbo : statut commande → %s" % remote_state)
 
-    # ------------------------------------------------------------------
-    # Traitement du webhook shipment (retour Shippingbo → Odoo)
-    # ------------------------------------------------------------------
-
     def _process_shipment_webhook(self, shipment, tracking_only=False):
-        """Met à jour le BL depuis un event shipment Shippingbo.
-
-        Args:
-            shipment (dict): payload de l'objet Shipment reçu par webhook.
-            tracking_only (bool): ne met à jour que transporteur / tracking.
-        """
         self.ensure_one()
 
         tracking_ref  = (shipment.get("shipping_ref") or "").strip() or False
         tracking_url  = (shipment.get("tracking_url") or "").strip() or False
         carrier_name  = (shipment.get("carrier_name") or "").strip() or False
         shipment_id   = shipment.get("id")
-
-        # --- Mise à jour transporteur ---
         if carrier_name:
             carrier = self._find_odoo_carrier(carrier_name)
             if carrier == "multiple":
@@ -436,8 +371,6 @@ class StockPicking(models.Model):
                     body="Shippingbo shipment (id=%s) : aucun transporteur Odoo pour '%s'."
                          % (shipment_id, carrier_name)
                 )
-
-        # --- Tracking (carrier_tracking_url est calculé nativement par le transporteur) ---
         if tracking_ref and tracking_ref != self.carrier_tracking_ref:
             self.write({"carrier_tracking_ref": tracking_ref})
         if tracking_url:
@@ -445,8 +378,6 @@ class StockPicking(models.Model):
 
         if tracking_only or self.state in ("done", "cancel"):
             return
-
-        # --- Quantités expédiées ---
         items_ship = shipment.get("order_items_shipments") or []
         if not items_ship:
             self.message_post(
@@ -456,9 +387,6 @@ class StockPicking(models.Model):
             self._apply_shipped_quantities(items_ship, shipment_id)
 
     def _apply_shipped_quantities(self, items_ship, shipment_id):
-        """Convertit les items expédiés en quantités Odoo, valide le BL et
-        reporte la commande Shippingbo sur le reliquat éventuel."""
-        # Charger la table de conversion colis → unités
         items_map = {}
         if self.shippingbo_items_map:
             try:
@@ -466,7 +394,6 @@ class StockPicking(models.Model):
             except Exception:
                 items_map = {}
 
-        # Agréger les quantités par product_id
         qty_by_product = {}
         unresolved = []
 
@@ -491,14 +418,13 @@ class StockPicking(models.Model):
             )
 
         if not qty_by_product:
-            # Sans quantité résolue, button_validate validerait tout le réservé : on s'abstient.
+            # button_validate would otherwise validate the whole reserved quantity.
             self.message_post(
                 body="Shippingbo shipment (id=%s) : aucune quantité exploitable — BL non validé."
                      % shipment_id
             )
             return
 
-        # Appliquer les quantités sur les mouvements (répartition si plusieurs moves par produit)
         moves = self.move_ids.filtered(lambda m: m.state not in ("done", "cancel"))
         touched = self.env["stock.move"]
         for pid, shipped_qty in qty_by_product.items():
@@ -516,10 +442,8 @@ class StockPicking(models.Model):
                 remaining -= take
             touched |= product_moves
 
-        # Les produits non expédiés partent en reliquat
         (moves - touched).write({"quantity": 0, "picked": False})
 
-        # Valider + backorder si partiel
         ctx = {"shippingbo_skip_auto_send": True}
         try:
             with self.env.cr.savepoint():
@@ -551,7 +475,7 @@ class StockPicking(models.Model):
             "shippingbo_shipment_id": shipment_id or 0,
         })
 
-        # Le reliquat reste rattaché à la même commande Shippingbo (pas de nouvel envoi)
+        # The backorder stays attached to the same Shippingbo order: no new send.
         backorders = self.search([("backorder_id", "=", self.id)])
         if backorders:
             backorders.write({
@@ -565,12 +489,7 @@ class StockPicking(models.Model):
                          % (self.name, self.shippingbo_order_id)
                 )
 
-    # ------------------------------------------------------------------
-    # Annulation vers Shippingbo
-    # ------------------------------------------------------------------
-
     def action_cancel_shippingbo(self):
-        """Annule la commande Shippingbo liée à ce BL."""
         self.ensure_one()
         if not self.shippingbo_order_id:
             return
@@ -582,10 +501,6 @@ class StockPicking(models.Model):
         else:
             self.write({"shippingbo_state": "cancelled"})
             self.message_post(body="Shippingbo : commande annulée.")
-
-    # ------------------------------------------------------------------
-    # Helpers internes
-    # ------------------------------------------------------------------
 
     @staticmethod
     def _item_line(source_ref, product_ref, product_id, title,
@@ -620,10 +535,7 @@ class StockPicking(models.Model):
         }
 
     def _get_shippingbo_carrier_name(self):
-        """Retourne le nom du transporteur Shippingbo mappé depuis le carrier Odoo.
-
-        Cherche d'abord dans la table de mapping, puis fallback sur le nom Odoo.
-        """
+        """Mapped Shippingbo carrier name, falling back to the Odoo carrier name."""
         if not self.carrier_id:
             return None
         mapping = self.env["shippingbo.carrier.mapping"].sudo().search([
@@ -634,11 +546,7 @@ class StockPicking(models.Model):
         return self.carrier_id.name
 
     def _find_odoo_carrier(self, carrier_name):
-        """Cherche un delivery.carrier Odoo depuis un nom Shippingbo.
-
-        Utilise d'abord la table de mapping, puis fallback exact/ilike.
-        Retourne le carrier, 'multiple', ou False.
-        """
+        """Return the carrier (mapping, then exact, then ilike match), 'multiple' or False."""
         mapping = self.env["shippingbo.carrier.mapping"].sudo().search([
             ("shippingbo_carrier_name", "=", carrier_name)
         ], limit=1)
