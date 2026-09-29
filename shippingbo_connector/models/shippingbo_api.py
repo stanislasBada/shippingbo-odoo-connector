@@ -111,7 +111,13 @@ class ShippingboApi(models.AbstractModel):
                 errors += 1
                 continue
 
-            shippingbo_qty = float(sbo_products[0].get('stock', 0))
+            sbo_stock = sbo_products[0].get('stock')
+            if sbo_stock is None:
+                # Unknown stock must not be read as zero.
+                _logger.warning("Product '%s' has no stock value in ShippingBo — skipped", ref)
+                skipped += 1
+                continue
+            shippingbo_qty = float(sbo_stock)
             current_qty = sum(Quant.search([
                 ('product_id', '=', product.id),
                 ('location_id', 'child_of', location.id),
