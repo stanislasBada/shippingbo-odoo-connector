@@ -36,6 +36,10 @@
                              help="Envoyer automatiquement le BL à Shippingbo dès qu'il est prêt (réservé).">
                         <field name="shippingbo_auto_send_on_ready"/>
                     </setting>
+                    <setting string="Auto-send purchase receipts"
+                             help="Envoyer automatiquement les bons de réception à Shippingbo à la confirmation de la commande d'achat.">
+                        <field name="shippingbo_auto_send_purchase_on_confirm"/>
+                    </setting>
                     <setting string="Carrier Mapping"
                              help="Correspondance entre transporteurs Odoo et Shippingbo.">
                         <button name="%(shippingbo_connector.action_shippingbo_carrier_mapping)d"

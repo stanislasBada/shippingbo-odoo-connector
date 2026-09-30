@@ -8,22 +8,36 @@
             <xpath expr="//header" position="inside">
                 <button name="action_send_to_shippingbo" type="object"
                         string="Envoyer à Shippingbo"
-                        invisible="shippingbo_order_id or picking_type_code != 'outgoing' or state in ('draft', 'done', 'cancel')"/>
+                        invisible="state in ('draft', 'done', 'cancel')
+                                   or (picking_type_code == 'outgoing' and shippingbo_order_id)
+                                   or (picking_type_code == 'incoming' and (shippingbo_capsule_id or not purchase_id))
+                                   or picking_type_code not in ('outgoing', 'incoming')"/>
+                <button name="action_shippingbo_resend_capsule" type="object"
+                        string="Renvoyer à Shippingbo"
+                        confirm="Supprimer puis recréer la réception côté Shippingbo ?"
+                        invisible="picking_type_code != 'incoming' or not shippingbo_capsule_id
+                                   or shippingbo_state not in ('transmitted', 'error')
+                                   or state in ('done', 'cancel')"/>
                 <button name="action_cancel_shippingbo" type="object"
                         string="Annuler sur Shippingbo"
-                        confirm="Annuler la commande côté Shippingbo ?"
-                        invisible="not shippingbo_order_id or shippingbo_state == 'cancelled' or state in ('done', 'cancel')"/>
+                        confirm="Annuler côté Shippingbo ?"
+                        invisible="not (shippingbo_order_id or shippingbo_capsule_id)
+                                   or shippingbo_state == 'cancelled' or state in ('done', 'cancel')"/>
             </xpath>
             <xpath expr="//notebook" position="inside">
                 <page string="Shippingbo" name="shippingbo"
-                      invisible="picking_type_code != 'outgoing'">
+                      invisible="picking_type_code not in ('outgoing', 'incoming')">
                     <group>
                         <group>
-                            <field name="shippingbo_order_id" readonly="1"/>
+                            <field name="shippingbo_order_id" readonly="1"
+                                   invisible="picking_type_code != 'outgoing'"/>
+                            <field name="shippingbo_capsule_id" readonly="1"
+                                   invisible="picking_type_code != 'incoming'"/>
                             <field name="shippingbo_state" readonly="1"/>
-                            <field name="shippingbo_shipment_id" readonly="1"/>
+                            <field name="shippingbo_shipment_id" readonly="1"
+                                   invisible="picking_type_code != 'outgoing'"/>
                         </group>
-                        <group>
+                        <group invisible="picking_type_code != 'outgoing'">
                             <field name="shippingbo_earliest_ship_date"/>
                             <field name="carrier_tracking_ref"/>
                             <field name="carrier_tracking_url" widget="url"/>

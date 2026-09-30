@@ -47,6 +47,7 @@ class StockPicking(models.Model):
             ("in_progress",  "En préparation"),
             ("shipped",      "Expédié"),
             ("delivered",    "Livré"),
+            ("received",     "Réceptionné"),
             ("cancelled",    "Annulé"),
             ("error",        "Erreur"),
         ],
@@ -67,14 +68,21 @@ class StockPicking(models.Model):
 
     def action_send_to_shippingbo(self):
         for picking in self:
-            picking._send_to_shippingbo()
+            picking._shippingbo_send()
+
+    def _shippingbo_send(self):
+        self.ensure_one()
+        if self.picking_type_code == "incoming":
+            self._send_capsule_to_shippingbo()
+        else:
+            self._send_to_shippingbo()
 
     def _shippingbo_auto_send(self):
         """Failures must not block the reservation that triggered the send."""
         self.ensure_one()
         try:
             with self.env.cr.savepoint():
-                self._send_to_shippingbo()
+                self._shippingbo_send()
         except Exception as e:
             _logger.exception("ShippingBo: auto send failed for picking %s", self.name)
             self.message_post(body="Shippingbo : envoi automatique échoué — %s" % e)
@@ -444,30 +452,7 @@ class StockPicking(models.Model):
 
         (moves - touched).write({"quantity": 0, "picked": False})
 
-        ctx = {"shippingbo_skip_auto_send": True}
-        try:
-            with self.env.cr.savepoint():
-                picking = self.with_context(**ctx)
-                res = picking.button_validate()
-                if isinstance(res, dict) and res.get("res_model") == "stock.backorder.confirmation":
-                    Wizard = self.env["stock.backorder.confirmation"].with_context(
-                        dict(res.get("context") or {}, **ctx)
-                    )
-                    wiz = Wizard.browse(res["res_id"]) if res.get("res_id") else Wizard.create({})
-                    wiz.process()
-                elif isinstance(res, dict):
-                    self.message_post(
-                        body="Shippingbo shipment (id=%s) : validation en attente (assistant %s)."
-                             % (shipment_id, res.get("res_model"))
-                    )
-        except Exception as e:
-            _logger.exception("ShippingBo: auto validation failed for picking %s", self.name)
-            self.message_post(
-                body="Shippingbo shipment : validation auto échouée — %s" % e
-            )
-            return
-
-        if self.state != "done":
+        if not self._shippingbo_validate_with_backorder("Shippingbo shipment (id=%s)" % shipment_id):
             return
 
         self.write({
@@ -489,8 +474,36 @@ class StockPicking(models.Model):
                          % (self.name, self.shippingbo_order_id)
                 )
 
+    def _shippingbo_validate_with_backorder(self, label):
+        """Validate with the quantities set on the moves, creating a backorder for the rest.
+
+        Return True when the picking ends up done.
+        """
+        ctx = {"shippingbo_skip_auto_send": True}
+        try:
+            with self.env.cr.savepoint():
+                res = self.with_context(**ctx).button_validate()
+                if isinstance(res, dict) and res.get("res_model") == "stock.backorder.confirmation":
+                    Wizard = self.env["stock.backorder.confirmation"].with_context(
+                        dict(res.get("context") or {}, **ctx)
+                    )
+                    wiz = Wizard.browse(res["res_id"]) if res.get("res_id") else Wizard.create({})
+                    wiz.process()
+                elif isinstance(res, dict):
+                    self.message_post(
+                        body="%s : validation en attente (assistant %s)." % (label, res.get("res_model"))
+                    )
+        except Exception as e:
+            _logger.exception("ShippingBo: auto validation failed for picking %s", self.name)
+            self.message_post(body="%s : validation auto échouée — %s" % (label, e))
+            return False
+        return self.state == "done"
+
     def action_cancel_shippingbo(self):
         self.ensure_one()
+        if self.picking_type_code == "incoming":
+            self._shippingbo_cancel_capsule()
+            return
         if not self.shippingbo_order_id:
             return
         res = self.sale_id.update_shippingbo_state(

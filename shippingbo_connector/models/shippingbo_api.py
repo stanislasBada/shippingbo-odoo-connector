@@ -41,6 +41,10 @@ class ShippingboApi(models.AbstractModel):
         return data['access_token']
 
     def _shippingbo_request(self, method, endpoint, payload=None):
+        return self._shippingbo_call(method, endpoint, payload)[1]
+
+    def _shippingbo_call(self, method, endpoint, payload=None):
+        """Return (http_status, json_body)."""
         config = self.env['ir.config_parameter'].sudo()
         url = f'https://app.shippingbo.com{endpoint}'
         token = self._shippingbo_get_token()
@@ -65,9 +69,9 @@ class ShippingboApi(models.AbstractModel):
             _logger.error('ShippingBo error %s %s', r.status_code, r.text)
 
         try:
-            return r.json()
+            return r.status_code, r.json()
         except Exception:
-            return {'detail': 'error'}
+            return r.status_code, {'detail': 'error'}
 
     @api.model
     def sync_stock_from_shippingbo(self):

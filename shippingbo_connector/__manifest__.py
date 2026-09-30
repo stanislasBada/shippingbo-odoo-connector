@@ -6,7 +6,7 @@
     "website": "https://catalyt.fr",
     "license": "OPL-1",
     "category": "Inventory",
-    "depends": ["stock", "sale", "sale_stock", "delivery", "stock_delivery"],
+    "depends": ["stock", "sale", "sale_stock", "delivery", "stock_delivery", "purchase_stock"],
     "data": [
         "security/ir.model.access.csv",
         "views/shippingbo_carrier_mapping_views.xml",
