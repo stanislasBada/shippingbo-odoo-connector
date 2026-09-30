@@ -6,12 +6,14 @@ from odoo import api, fields, models
 _logger = logging.getLogger(__name__)
 
 SHIPPINGBO_CAPSULE_STATE_MAP = {
+    "uploading":          "transmitted",
+    "draft":              "transmitted",
     "waiting":            "transmitted",
+    "sent_to_logistics":  "transmitted",
     "dispatched":         "transmitted",
-    "partially_received": "in_progress",
+    "ongoing":            "in_progress",
     "received":           "received",
     "in_trouble":         "error",
-    "cancelled":          "cancelled",
     "canceled":           "cancelled",
 }
 
@@ -156,18 +158,38 @@ class StockPicking(models.Model):
         open_picking = pickings.filtered(lambda p: p.state not in ("done", "cancel"))[:1]
         picking = open_picking or pickings[-1]
 
+        # Only post on change: the polling cron replays the same capsule repeatedly.
         state = SHIPPINGBO_CAPSULE_STATE_MAP.get(remote_state)
         if state and picking.shippingbo_state != state:
             picking.write({"shippingbo_state": state})
-        if remote_state == "in_trouble":
-            picking.message_post(body="⚠️ Shippingbo : réception en anomalie (in_trouble).")
-        else:
-            picking.message_post(body="Shippingbo : statut réception → %s" % remote_state)
+            if remote_state == "in_trouble":
+                picking.message_post(body="⚠️ Shippingbo : réception en anomalie (in_trouble).")
+            else:
+                picking.message_post(body="Shippingbo : statut réception → %s" % remote_state)
 
-        if remote_state in ("partially_received", "received") and open_picking:
+        if remote_state != "canceled" and open_picking:
             open_picking._shippingbo_apply_capsule_reception(
                 capsule.get("supply_capsule_items") or [], pickings
             )
+
+    @api.model
+    def cron_shippingbo_poll_supply_capsules(self):
+        """Fallback for webhooks: partial receptions do not always change the capsule state."""
+        pickings = self.search([
+            ("picking_type_code", "=", "incoming"),
+            ("shippingbo_capsule_id", "!=", 0),
+            ("state", "not in", ("done", "cancel")),
+        ])
+        api_client = self.env["shippingbo.api"]
+        for capsule_id in set(pickings.mapped("shippingbo_capsule_id")):
+            try:
+                with self.env.cr.savepoint():
+                    res = api_client._shippingbo_request("GET", "/supply_capsules/%s" % capsule_id)
+                    capsule = (res or {}).get("supply_capsule")
+                    if capsule:
+                        self._shippingbo_dispatch_supply_capsule(capsule)
+            except Exception:
+                _logger.exception("ShippingBo: polling failed for supply capsule %s", capsule_id)
 
     def _shippingbo_apply_capsule_reception(self, items, capsule_pickings):
         """Receive the difference between Shippingbo's received_quantity and what
