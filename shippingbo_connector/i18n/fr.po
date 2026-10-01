@@ -628,3 +628,15 @@ msgstr "⚠️ Shippingbo : réception en anomalie (in_trouble)."
 #: code:addons/shippingbo_connector/models/stock_picking_return.py:0
 msgid "⚠️ Shippingbo: return in trouble (in_trouble)."
 msgstr "⚠️ Shippingbo : retour en anomalie (in_trouble)."
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_stock_warehouse__shippingbo_enabled
+#: model:ir.model.fields,field_description:shippingbo_connector.field_stock_picking__shippingbo_warehouse_enabled
+msgid "Synced with Shippingbo"
+msgstr "Synchronisé avec Shippingbo"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,help:shippingbo_connector.field_stock_warehouse__shippingbo_enabled
+#: model:ir.model.fields,help:shippingbo_connector.field_stock_picking__shippingbo_warehouse_enabled
+msgid "Deliveries, receipts and returns of this warehouse are sent to Shippingbo."
+msgstr "Les livraisons, réceptions et retours de cet entrepôt sont envoyés à Shippingbo."

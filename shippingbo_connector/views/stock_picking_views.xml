@@ -8,7 +8,8 @@
             <xpath expr="//header" position="inside">
                 <button name="action_send_to_shippingbo" type="object"
                         string="Send to Shippingbo"
-                        invisible="state in ('draft', 'done', 'cancel')
+                        invisible="not shippingbo_warehouse_enabled
+                                   or state in ('draft', 'done', 'cancel')
                                    or (picking_type_code == 'outgoing' and shippingbo_order_id)
                                    or (picking_type_code == 'incoming' and (shippingbo_capsule_id or shippingbo_return_order_id or not (purchase_id or return_id)))
                                    or picking_type_code not in ('outgoing', 'incoming')"/>

@@ -61,6 +61,9 @@ class StockPicking(models.Model):
         index=True,
         help="Shippingbo shipment that validated this delivery (webhook deduplication).",
     )
+    shippingbo_warehouse_enabled = fields.Boolean(
+        related="picking_type_id.warehouse_id.shippingbo_enabled",
+    )
     shippingbo_earliest_ship_date = fields.Date(
         string="Shippingbo Preparation Date",
         help="Date from which Shippingbo may ship this order.",
@@ -72,6 +75,9 @@ class StockPicking(models.Model):
 
     def _shippingbo_send(self):
         self.ensure_one()
+        if not self.shippingbo_warehouse_enabled:
+            _logger.info("ShippingBo: picking %s skipped, warehouse not synced", self.name)
+            return
         if self.picking_type_code == "incoming" and self.return_id:
             self._send_return_order_to_shippingbo()
         elif self.picking_type_code == "incoming":

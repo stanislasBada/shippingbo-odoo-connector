@@ -13,6 +13,7 @@
         "views/res_config_settings_views.xml",
         "views/stock_picking_views.xml",
         "views/product_template_views.xml",
+        "views/stock_warehouse_views.xml",
         "data/stock_sync_cron.xml",
         "data/product_sync_cron.xml",
         "data/capsule_poll_cron.xml",
