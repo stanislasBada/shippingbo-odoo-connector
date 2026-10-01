@@ -239,16 +239,7 @@ class StockPicking(models.Model):
             )
             return
 
-        touched = Move
-        for targets, qty in to_receive:
-            remaining = qty
-            for move in targets:
-                move_qty = move.product_id.uom_id._compute_quantity(remaining, move.product_uom)
-                take = move_qty if move == targets[-1] else min(move_qty, move.product_uom_qty)
-                move.write({"quantity": take, "picked": True})
-                remaining -= move.product_uom._compute_quantity(take, move.product_id.uom_id)
-            touched |= targets
-        (open_moves - touched).write({"quantity": 0, "picked": False})
+        self._shippingbo_set_move_quantities(open_moves, to_receive)
 
         if not self._shippingbo_validate_with_backorder(label):
             return

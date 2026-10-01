@@ -10,7 +10,7 @@
                         string="Envoyer à Shippingbo"
                         invisible="state in ('draft', 'done', 'cancel')
                                    or (picking_type_code == 'outgoing' and shippingbo_order_id)
-                                   or (picking_type_code == 'incoming' and (shippingbo_capsule_id or not purchase_id))
+                                   or (picking_type_code == 'incoming' and (shippingbo_capsule_id or shippingbo_return_order_id or not (purchase_id or return_id)))
                                    or picking_type_code not in ('outgoing', 'incoming')"/>
                 <button name="action_shippingbo_resend_capsule" type="object"
                         string="Renvoyer à Shippingbo"
@@ -21,7 +21,7 @@
                 <button name="action_cancel_shippingbo" type="object"
                         string="Annuler sur Shippingbo"
                         confirm="Annuler côté Shippingbo ?"
-                        invisible="not (shippingbo_order_id or shippingbo_capsule_id)
+                        invisible="not (shippingbo_order_id or shippingbo_capsule_id or shippingbo_return_order_id)
                                    or shippingbo_state == 'cancelled' or state in ('done', 'cancel')"/>
             </xpath>
             <xpath expr="//notebook" position="inside">
@@ -32,7 +32,9 @@
                             <field name="shippingbo_order_id" readonly="1"
                                    invisible="picking_type_code != 'outgoing'"/>
                             <field name="shippingbo_capsule_id" readonly="1"
-                                   invisible="picking_type_code != 'incoming'"/>
+                                   invisible="picking_type_code != 'incoming' or return_id"/>
+                            <field name="shippingbo_return_order_id" readonly="1"
+                                   invisible="not return_id"/>
                             <field name="shippingbo_state" readonly="1"/>
                             <field name="shippingbo_shipment_id" readonly="1"
                                    invisible="picking_type_code != 'outgoing'"/>

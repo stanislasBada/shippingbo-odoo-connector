@@ -35,6 +35,8 @@ class ShippingboWebhook(http.Controller):
                     Picking._shippingbo_dispatch_order(obj)
                 elif object_class == "SupplyCapsule":
                     Picking._shippingbo_dispatch_supply_capsule(obj)
+                elif object_class == "ReturnOrder":
+                    Picking._shippingbo_dispatch_return_order(obj)
                 else:
                     _logger.info("ShippingBo webhook: unhandled object_class %s", object_class)
         except Exception:

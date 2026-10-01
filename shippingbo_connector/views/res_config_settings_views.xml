@@ -40,6 +40,10 @@
                              help="Envoyer automatiquement les bons de réception à Shippingbo à la confirmation de la commande d'achat.">
                         <field name="shippingbo_auto_send_purchase_on_confirm"/>
                     </setting>
+                    <setting string="Auto-send returns"
+                             help="Envoyer automatiquement à Shippingbo les retours créés depuis un BL transmis à Shippingbo.">
+                        <field name="shippingbo_auto_send_returns"/>
+                    </setting>
                     <setting string="Carrier Mapping"
                              help="Correspondance entre transporteurs Odoo et Shippingbo.">
                         <button name="%(shippingbo_connector.action_shippingbo_carrier_mapping)d"

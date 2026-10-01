@@ -72,7 +72,9 @@ class StockPicking(models.Model):
 
     def _shippingbo_send(self):
         self.ensure_one()
-        if self.picking_type_code == "incoming":
+        if self.picking_type_code == "incoming" and self.return_id:
+            self._send_return_order_to_shippingbo()
+        elif self.picking_type_code == "incoming":
             self._send_capsule_to_shippingbo()
         else:
             self._send_to_shippingbo()
@@ -474,8 +476,9 @@ class StockPicking(models.Model):
                          % (self.name, self.shippingbo_order_id)
                 )
 
-    def _shippingbo_validate_with_backorder(self, label):
-        """Validate with the quantities set on the moves, creating a backorder for the rest.
+    def _shippingbo_validate_with_backorder(self, label, backorder=True):
+        """Validate with the quantities set on the moves; the rest goes to a backorder,
+        or is cancelled when backorder is False.
 
         Return True when the picking ends up done.
         """
@@ -488,7 +491,7 @@ class StockPicking(models.Model):
                         dict(res.get("context") or {}, **ctx)
                     )
                     wiz = Wizard.browse(res["res_id"]) if res.get("res_id") else Wizard.create({})
-                    wiz.process()
+                    wiz.process() if backorder else wiz.process_cancel_backorder()
                 elif isinstance(res, dict):
                     self.message_post(
                         body="%s : validation en attente (assistant %s)." % (label, res.get("res_model"))
@@ -499,10 +502,31 @@ class StockPicking(models.Model):
             return False
         return self.state == "done"
 
+    @staticmethod
+    def _shippingbo_set_move_quantities(open_moves, to_receive):
+        """to_receive: [(moves, qty in product UoM)]. Untouched open moves go to the backorder."""
+        touched = open_moves.browse()
+        for targets, qty in to_receive:
+            remaining = qty
+            for move in targets:
+                move_qty = move.product_id.uom_id._compute_quantity(remaining, move.product_uom)
+                take = move_qty if move == targets[-1] else min(move_qty, move.product_uom_qty)
+                move.write({"quantity": take, "picked": True})
+                remaining -= move.product_uom._compute_quantity(take, move.product_id.uom_id)
+            touched |= targets
+        (open_moves - touched).write({"quantity": 0, "picked": False})
+
+    @api.model
+    def cron_shippingbo_poll(self):
+        """Fallback for webhooks on supply capsules and return orders."""
+        self.cron_shippingbo_poll_supply_capsules()
+        self.cron_shippingbo_poll_return_orders()
+
     def action_cancel_shippingbo(self):
         self.ensure_one()
         if self.picking_type_code == "incoming":
             self._shippingbo_cancel_capsule()
+            self._shippingbo_cancel_return_order()
             return
         if not self.shippingbo_order_id:
             return

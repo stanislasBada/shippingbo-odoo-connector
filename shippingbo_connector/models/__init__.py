@@ -5,6 +5,7 @@ from . import shippingbo_carrier_mapping
 from . import stock_move
 from . import stock_picking
 from . import stock_picking_capsule
+from . import stock_picking_return
 from . import purchase_order
 from . import product_template
 from . import product_product

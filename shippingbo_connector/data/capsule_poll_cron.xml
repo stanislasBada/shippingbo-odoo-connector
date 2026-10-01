@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <record id="ir_cron_shippingbo_capsule_poll" model="ir.cron">
-        <field name="name">ShippingBo - Supply Capsule Polling</field>
+        <field name="name">ShippingBo - Receipts &amp; Returns Polling</field>
         <field name="model_id" ref="stock.model_stock_picking"/>
         <field name="state">code</field>
-        <field name="code">model.cron_shippingbo_poll_supply_capsules()</field>
+        <field name="code">model.cron_shippingbo_poll()</field>
         <field name="interval_number">30</field>
         <field name="interval_type">minutes</field>
         <field name="active">True</field>

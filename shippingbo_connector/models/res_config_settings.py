@@ -41,3 +41,8 @@ class ResConfigSettings(models.TransientModel):
         config_parameter="shippingbo.auto_send_purchase_on_confirm",
         help="Send incoming receipts to ShippingBo when the purchase order is confirmed.",
     )
+    shippingbo_auto_send_returns = fields.Boolean(
+        string="Auto-send returns",
+        config_parameter="shippingbo.auto_send_returns",
+        help="Send customer returns to ShippingBo when they are created from a delivery sent to ShippingBo.",
+    )
