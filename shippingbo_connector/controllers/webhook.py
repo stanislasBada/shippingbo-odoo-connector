@@ -1,7 +1,7 @@
 import json
 import logging
 
-from odoo import http
+from odoo import SUPERUSER_ID, http
 from odoo.http import request
 
 _logger = logging.getLogger(__name__)
@@ -26,7 +26,8 @@ class ShippingboWebhook(http.Controller):
         obj = payload.get("object") or payload
         _logger.info("ShippingBo webhook received: %s id=%s", object_class, obj.get("id"))
 
-        Picking = request.env["stock.picking"].sudo()
+        # Run as OdooBot so that chatter messages are not authored by the public user.
+        Picking = request.env["stock.picking"].with_user(SUPERUSER_ID)
         try:
             with request.env.cr.savepoint():
                 if object_class == "Shipment":
