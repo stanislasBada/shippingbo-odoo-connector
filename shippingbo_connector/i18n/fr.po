@@ -1,0 +1,630 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* shippingbo_connector
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Language: fr\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_return.py:0
+msgid "%s: %s is not restockable and tracked by lot, scrap it manually."
+msgstr "%s : %s non restockable suivi par lot, mise au rebut à faire manuellement."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_return.py:0
+msgid "%s: %s received but not in the return."
+msgstr "%s : %s reçu mais absent du retour."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_return.py:0
+msgid "%s: %s × %s scrapped (not restockable)."
+msgstr "%s : %s × %s mis au rebut (non restockable)."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid "%s: automatic validation failed — %s"
+msgstr "%s : validation auto échouée — %s"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_capsule.py:0
+msgid "%s: products tracked by lot, validate the receipt manually: %s"
+msgstr "%s : articles suivis par lot, réception à valider manuellement : %s"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_return.py:0
+msgid "%s: products tracked by lot, validate the return manually: %s"
+msgstr "%s : articles suivis par lot, retour à valider manuellement : %s"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_return.py:0
+msgid "%s: return closed, cancel the remaining backorder manually."
+msgstr "%s : retour clôturé, reliquat restant à annuler manuellement."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_return.py:0
+msgid "%s: scrap failed for %s — %s"
+msgstr "%s : mise au rebut échouée pour %s — %s"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_capsule.py:0
+msgid "%s: unresolved line(s): %s"
+msgstr "%s : ligne(s) non résolue(s) : %s"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_return.py:0
+msgid "%s: unresolved non-restockable product(s): %s"
+msgstr "%s : produit(s) non restockable(s) non résolu(s) : %s"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_return.py:0
+msgid "%s: unresolved Shippingbo product(s): %s"
+msgstr "%s : produit(s) Shippingbo non résolu(s) : %s"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid "%s: validation pending (wizard %s)."
+msgstr "%s : validation en attente (assistant %s)."
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_shippingbo_carrier_mapping__active
+msgid "Active"
+msgstr "Actif"
+
+#. module: shippingbo_connector
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.res_config_settings_view_form_shippingbo
+msgid "API Credentials"
+msgstr "Identifiants API"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_res_config_settings__shippingbo_app_id
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.res_config_settings_view_form_shippingbo
+msgid "App ID"
+msgstr "ID application"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_res_config_settings__shippingbo_auto_send_purchase_on_confirm
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.res_config_settings_view_form_shippingbo
+msgid "Auto-send purchase receipts"
+msgstr "Envoi auto des réceptions d'achat"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_res_config_settings__shippingbo_auto_send_on_ready
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.res_config_settings_view_form_shippingbo
+msgid "Auto-send ready deliveries"
+msgstr "Envoi auto des livraisons prêtes"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_res_config_settings__shippingbo_auto_send_returns
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.res_config_settings_view_form_shippingbo
+msgid "Auto-send returns"
+msgstr "Envoi auto des retours"
+
+#. module: shippingbo_connector
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.res_config_settings_view_form_shippingbo
+msgid "Automatically send receipts to Shippingbo when the purchase order is confirmed."
+msgstr "Envoyer automatiquement les bons de réception à Shippingbo à la confirmation de la commande d'achat."
+
+#. module: shippingbo_connector
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.res_config_settings_view_form_shippingbo
+msgid "Automatically send the delivery to Shippingbo as soon as it is ready (reserved)."
+msgstr "Envoyer automatiquement le BL à Shippingbo dès qu'il est prêt (réservé)."
+
+#. module: shippingbo_connector
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.res_config_settings_view_form_shippingbo
+msgid "Automatically send to Shippingbo the returns created from a delivery sent to Shippingbo."
+msgstr "Envoyer automatiquement à Shippingbo les retours créés depuis un BL transmis à Shippingbo."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_capsule.py:0
+msgid "Backorder of %s — attached to Shippingbo capsule %s."
+msgstr "Reliquat de %s — rattaché à la capsule Shippingbo %s."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid "Backorder of %s — attached to Shippingbo order %s."
+msgstr "Reliquat de %s — rattaché à la commande Shippingbo %s."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_return.py:0
+msgid "Backorder of %s — attached to Shippingbo return %s."
+msgstr "Reliquat de %s — rattaché au retour Shippingbo %s."
+
+#. module: shippingbo_connector
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.view_picking_form_shippingbo
+msgid "Cancel in Shippingbo"
+msgstr "Annuler sur Shippingbo"
+
+#. module: shippingbo_connector
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.view_picking_form_shippingbo
+msgid "Cancel in Shippingbo?"
+msgstr "Annuler côté Shippingbo ?"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields.selection,name:shippingbo_connector.selection__stock_picking__shippingbo_state__cancelled
+msgid "Cancelled"
+msgstr "Annulé"
+
+#. module: shippingbo_connector
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.res_config_settings_view_form_shippingbo
+#: model:ir.actions.act_window,name:shippingbo_connector.action_shippingbo_carrier_mapping
+#: model:ir.ui.menu,name:shippingbo_connector.menu_shippingbo_carrier_mapping
+msgid "Carrier Mapping"
+msgstr "Mapping transporteurs"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_res_config_settings__shippingbo_client_id
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.res_config_settings_view_form_shippingbo
+msgid "Client ID"
+msgstr "ID client"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_res_config_settings__shippingbo_client_secret
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.res_config_settings_view_form_shippingbo
+msgid "Client Secret"
+msgstr "Secret client"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,help:shippingbo_connector.field_stock_picking__shippingbo_earliest_ship_date
+msgid "Date from which Shippingbo may ship this order."
+msgstr "Date à partir de laquelle Shippingbo peut expédier cette commande."
+
+#. module: shippingbo_connector
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.view_picking_form_shippingbo
+msgid "Delete and recreate the receipt in Shippingbo?"
+msgstr "Supprimer puis recréer la réception côté Shippingbo ?"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields.selection,name:shippingbo_connector.selection__stock_picking__shippingbo_state__delivered
+msgid "Delivered"
+msgstr "Livré"
+
+#. module: shippingbo_connector
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.res_config_settings_view_form_shippingbo
+msgid "Deliveries"
+msgstr "Flux logistiques"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields.selection,name:shippingbo_connector.selection__stock_picking__shippingbo_state__error
+msgid "Error"
+msgstr "Erreur"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,help:shippingbo_connector.field_shippingbo_carrier_mapping__shippingbo_carrier_name
+msgid "Exact value of the carrier_name field in Shippingbo."
+msgstr "Valeur exacte du champ carrier_name côté Shippingbo."
+
+#. module: shippingbo_connector
+#: model:ir.model.fields.selection,name:shippingbo_connector.selection__stock_picking__shippingbo_state__in_progress
+msgid "In Progress"
+msgstr "En préparation"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,help:shippingbo_connector.field_res_config_settings__shippingbo_refresh_token
+msgid "Initial refresh token obtained from the ShippingBo OAuth2 authorization flow."
+msgstr "Jeton de rafraîchissement initial obtenu via le flux d'autorisation OAuth2 ShippingBo."
+
+#. module: shippingbo_connector
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.res_config_settings_view_form_shippingbo
+msgid "Initial token from the ShippingBo OAuth2 authorization flow. Refreshed automatically."
+msgstr "Jeton initial issu du flux d'autorisation OAuth2 ShippingBo. Rafraîchi automatiquement."
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,help:shippingbo_connector.field_stock_picking__shippingbo_items_map
+msgid "JSON {order_item_id: {product_id, units}} built when the delivery is sent. Converts cartons into units when the shipment webhook comes back."
+msgstr "JSON {order_item_id: {product_id, units}} construit à l'envoi. Permet la conversion colis → unités au retour du webhook shipment."
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_product_product__shippingbo_last_sync
+msgid "Last Shippingbo Sync"
+msgstr "Dernière synchro Shippingbo"
+
+#. module: shippingbo_connector
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.res_config_settings_view_form_shippingbo
+msgid "Location used as source for the nightly ShippingBo stock sync."
+msgstr "Emplacement utilisé pour la synchronisation nocturne du stock ShippingBo."
+
+#. module: shippingbo_connector
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.res_config_settings_view_form_shippingbo
+msgid "Mapping between Odoo and Shippingbo carriers."
+msgstr "Correspondance entre transporteurs Odoo et Shippingbo."
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_shippingbo_carrier_mapping__odoo_carrier_id
+msgid "Odoo Carrier"
+msgstr "Transporteur Odoo"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid "Order sent to Shippingbo. shippingbo_order_id=%s"
+msgstr "Commande envoyée à Shippingbo. shippingbo_order_id=%s"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields.selection,name:shippingbo_connector.selection__stock_picking__shippingbo_state__pending
+msgid "Pending"
+msgstr "En attente"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_capsule.py:0
+msgid "Receipt sent to Shippingbo. supply_capsule_id=%s"
+msgstr "Réception envoyée à Shippingbo. supply_capsule_id=%s"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields.selection,name:shippingbo_connector.selection__stock_picking__shippingbo_state__received
+msgid "Received"
+msgstr "Réceptionné"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_res_config_settings__shippingbo_redirect_uri
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.res_config_settings_view_form_shippingbo
+msgid "Redirect URI"
+msgstr "URI de redirection"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_res_config_settings__shippingbo_refresh_token
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.res_config_settings_view_form_shippingbo
+msgid "Refresh Token"
+msgstr "Jeton de rafraîchissement"
+
+#. module: shippingbo_connector
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.view_picking_form_shippingbo
+msgid "Resend to Shippingbo"
+msgstr "Renvoyer à Shippingbo"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_return.py:0
+msgid "Return sent to Shippingbo. return_order_id=%s"
+msgstr "Retour envoyé à Shippingbo. return_order_id=%s"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,help:shippingbo_connector.field_res_config_settings__shippingbo_auto_send_returns
+msgid "Send customer returns to ShippingBo when they are created from a delivery sent to ShippingBo."
+msgstr "Envoyer les retours clients à ShippingBo lorsqu'ils sont créés depuis une livraison transmise à ShippingBo."
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,help:shippingbo_connector.field_res_config_settings__shippingbo_auto_send_purchase_on_confirm
+msgid "Send incoming receipts to ShippingBo when the purchase order is confirmed."
+msgstr "Envoyer les réceptions à ShippingBo à la confirmation de la commande d'achat."
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,help:shippingbo_connector.field_res_config_settings__shippingbo_auto_send_on_ready
+msgid "Send outgoing deliveries to ShippingBo as soon as they are ready (reserved)."
+msgstr "Envoyer les livraisons à ShippingBo dès qu'elles sont prêtes (réservées)."
+
+#. module: shippingbo_connector
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.view_picking_form_shippingbo
+msgid "Send to Shippingbo"
+msgstr "Envoyer à Shippingbo"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields.selection,name:shippingbo_connector.selection__stock_picking__shippingbo_state__shipped
+msgid "Shipped"
+msgstr "Expédié"
+
+#. module: shippingbo_connector
+#: model:ir.model,name:shippingbo_connector.model_shippingbo_carrier_mapping
+msgid "Shippingbo Carrier Mapping"
+msgstr "Correspondance transporteurs Shippingbo"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_shippingbo_carrier_mapping__shippingbo_carrier_name
+msgid "Shippingbo Carrier Name"
+msgstr "Nom transporteur Shippingbo"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_stock_picking__shippingbo_items_map
+msgid "Shippingbo Items Map"
+msgstr "Correspondance articles Shippingbo"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_stock_picking__shippingbo_order_id
+msgid "Shippingbo Order ID"
+msgstr "ID commande Shippingbo"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,help:shippingbo_connector.field_stock_picking__shippingbo_order_id
+msgid "Shippingbo order ID, set when the delivery is sent and used for updates."
+msgstr "ID de la commande côté Shippingbo. Posé à l'envoi, utilisé pour les mises à jour."
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_stock_picking__shippingbo_earliest_ship_date
+msgid "Shippingbo Preparation Date"
+msgstr "Date de préparation Shippingbo"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_product_product__shippingbo_product_id
+msgid "Shippingbo Product ID"
+msgstr "ID produit Shippingbo"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,help:shippingbo_connector.field_product_product__shippingbo_product_id
+msgid "Shippingbo product ID, set by the first synchronization."
+msgstr "ID du produit côté Shippingbo, posé à la première synchronisation."
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_stock_picking__shippingbo_return_order_id
+msgid "Shippingbo Return Order ID"
+msgstr "ID retour Shippingbo"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid "Shippingbo shipment (id=%s) received but no open delivery for this order."
+msgstr "Shippingbo shipment (id=%s) reçu mais aucun BL ouvert pour cette commande."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid "Shippingbo shipment (id=%s): %s unresolved item(s): %s"
+msgstr "Shippingbo shipment (id=%s) : %s item(s) non résolus : %s"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid "Shippingbo shipment (id=%s): ambiguous carrier match for '%s'."
+msgstr "Shippingbo shipment (id=%s) : matching transporteur ambigu pour '%s'."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid "Shippingbo shipment (id=%s): no Odoo carrier for '%s'."
+msgstr "Shippingbo shipment (id=%s) : aucun transporteur Odoo pour '%s'."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid "Shippingbo shipment (id=%s): no order_items_shipments."
+msgstr "Shippingbo shipment (id=%s) : pas d'order_items_shipments."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid "Shippingbo shipment (id=%s): no usable quantity — delivery not validated."
+msgstr "Shippingbo shipment (id=%s) : aucune quantité exploitable — BL non validé."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid "Shippingbo shipment (id=%s): shipped product id=%s is not in the delivery."
+msgstr "Shippingbo shipment (id=%s) : produit id=%s expédié absent du BL."
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_stock_picking__shippingbo_shipment_id
+msgid "Shippingbo Shipment ID"
+msgstr "ID expédition Shippingbo"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,help:shippingbo_connector.field_stock_picking__shippingbo_shipment_id
+msgid "Shippingbo shipment that validated this delivery (webhook deduplication)."
+msgstr "ID du shipment Shippingbo ayant validé ce BL (anti-doublon webhook)."
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_stock_picking__shippingbo_state
+msgid "Shippingbo Status"
+msgstr "Statut Shippingbo"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_product_template__shippingbo_stock_sync
+#: model:ir.model.fields,field_description:shippingbo_connector.field_product_product__shippingbo_stock_sync
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.product_template_search_view_shippingbo
+msgid "Shippingbo Stock Sync"
+msgstr "Stock synchronisé Shippingbo"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_stock_picking__shippingbo_capsule_id
+msgid "Shippingbo Supply Capsule ID"
+msgstr "ID capsule d'approvisionnement Shippingbo"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid "Shippingbo: automatic send failed — %s"
+msgstr "Shippingbo : envoi automatique échoué — %s"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid "Shippingbo: cancellation failed."
+msgstr "Shippingbo : annulation échouée."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_capsule.py:0
+msgid "Shippingbo: deletion of capsule %s refused (%s) — %s"
+msgstr "Shippingbo : suppression de la capsule %s refusée (%s) — %s"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid "Shippingbo: no line to send (no 'consu' product with a quantity > 0)."
+msgstr "Shippingbo : aucune ligne à envoyer (pas d'article 'consu' avec qté > 0)."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_capsule.py:0
+#: code:addons/shippingbo_connector/models/stock_picking_return.py:0
+msgid "Shippingbo: no line to send."
+msgstr "Shippingbo : aucune ligne à envoyer."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid "Shippingbo: order cancelled."
+msgstr "Shippingbo : commande annulée."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid "Shippingbo: order sent but no ID returned. Response=%s"
+msgstr "Shippingbo : commande envoyée mais pas d'ID retourné. Réponse=%s"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid "Shippingbo: order status → %s"
+msgstr "Shippingbo : statut commande → %s"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid "Shippingbo: parcel tracking %s"
+msgstr "Shippingbo : suivi colis %s"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_capsule.py:0
+#: code:addons/shippingbo_connector/models/stock_picking_return.py:0
+msgid "Shippingbo: products without internal reference not sent: %s"
+msgstr "Shippingbo : articles sans référence interne non envoyés : %s"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_capsule.py:0
+msgid "Shippingbo: receipt cancelled."
+msgstr "Shippingbo : réception annulée."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_capsule.py:0
+msgid "Shippingbo: receipt sending failed (%s) — %s"
+msgstr "Shippingbo : envoi de la réception échoué (%s) — %s"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_capsule.py:0
+msgid "Shippingbo: receipt status → %s"
+msgstr "Shippingbo : statut réception → %s"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_capsule.py:0
+msgid "Shippingbo: reception already started, cancel it in Shippingbo."
+msgstr "Shippingbo : réception déjà commencée, annulation à traiter dans Shippingbo."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_capsule.py:0
+msgid "Shippingbo: reception already started, the change is not sent."
+msgstr "Shippingbo : réception déjà commencée, la modification n'est pas transmise."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_return.py:0
+msgid "Shippingbo: return already partially received, cancel it in Shippingbo."
+msgstr "Shippingbo : retour déjà réceptionné en partie, annulation à traiter dans Shippingbo."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_return.py:0
+msgid "Shippingbo: return cancellation refused (%s) — %s"
+msgstr "Shippingbo : annulation du retour refusée (%s) — %s"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_return.py:0
+msgid "Shippingbo: return cancelled."
+msgstr "Shippingbo : retour annulé."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_return.py:0
+msgid "Shippingbo: return sending failed (%s) — %s"
+msgstr "Shippingbo : envoi du retour échoué (%s) — %s"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_return.py:0
+msgid "Shippingbo: return status → %s"
+msgstr "Shippingbo : statut retour → %s"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_return.py:0
+msgid "Shippingbo: the original delivery %s was not sent to Shippingbo, return not sent."
+msgstr "Shippingbo : le BL d'origine %s n'a pas été envoyé à Shippingbo, retour non transmis."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid "Shippingbo: unexpected response — %s"
+msgstr "Shippingbo : réponse inattendue — %s"
+
+#. module: shippingbo_connector
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.res_config_settings_view_form_shippingbo
+msgid "Stock Location"
+msgstr "Emplacement de stock"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,help:shippingbo_connector.field_res_config_settings__shippingbo_stock_location_id
+msgid "Stock location used as source for the nightly ShippingBo stock synchronization."
+msgstr "Emplacement de stock utilisé pour la synchronisation nocturne du stock ShippingBo."
+
+#. module: shippingbo_connector
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.res_config_settings_view_form_shippingbo
+msgid "Stock Synchronization"
+msgstr "Synchronisation du stock"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_res_config_settings__shippingbo_stock_location_id
+msgid "Stock Synchronization Location"
+msgstr "Emplacement de synchronisation du stock"
+
+#. module: shippingbo_connector
+#: model:ir.actions.server,name:shippingbo_connector.action_shippingbo_sync_products
+msgid "Sync to Shippingbo"
+msgstr "Synchroniser vers Shippingbo"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,help:shippingbo_connector.field_product_template__shippingbo_stock_sync
+#: model:ir.model.fields,help:shippingbo_connector.field_product_product__shippingbo_stock_sync
+msgid "The stock of this product is driven by Shippingbo: the synchronization cron overwrites the Odoo quantity with the Shippingbo one."
+msgstr "Le stock de cet article est piloté par Shippingbo : le cron de synchronisation écrase la quantité Odoo par celle de Shippingbo."
+
+#. module: shippingbo_connector
+#: model:ir.model.fields.selection,name:shippingbo_connector.selection__stock_picking__shippingbo_state__transmitted
+msgid "Transmitted"
+msgstr "Transmis"
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid "⚠️ Shippingbo: empty order_item/product map (no order_items or unmatched source_ref) — watch this delivery."
+msgstr "⚠️ Shippingbo : table order_item/produit vide (order_items absents ou source_ref non rapproché) — suivi BL à surveiller."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_capsule.py:0
+msgid "⚠️ Shippingbo: receipt in trouble (in_trouble)."
+msgstr "⚠️ Shippingbo : réception en anomalie (in_trouble)."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking_return.py:0
+msgid "⚠️ Shippingbo: return in trouble (in_trouble)."
+msgstr "⚠️ Shippingbo : retour en anomalie (in_trouble)."

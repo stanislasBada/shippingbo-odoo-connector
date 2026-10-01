@@ -41,11 +41,11 @@ class StockPicking(models.Model):
         payload, missing = self._build_supply_capsule_payload()
         if missing:
             self.message_post(
-                body="Shippingbo : articles sans référence interne non envoyés : %s"
+                body=self.env._("Shippingbo: products without internal reference not sent: %s")
                      % ", ".join(missing.mapped("display_name"))
             )
         if not payload["supply_capsule"]["supply_capsule_items_attributes"]:
-            self.message_post(body="Shippingbo : aucune ligne à envoyer.")
+            self.message_post(body=self.env._("Shippingbo: no line to send."))
             return
 
         api_client = self.env["shippingbo.api"]
@@ -56,10 +56,10 @@ class StockPicking(models.Model):
 
         if capsule_id:
             self.write({"shippingbo_capsule_id": capsule_id, "shippingbo_state": "transmitted"})
-            self.message_post(body="Réception envoyée à Shippingbo. supply_capsule_id=%s" % capsule_id)
+            self.message_post(body=self.env._("Receipt sent to Shippingbo. supply_capsule_id=%s") % capsule_id)
         else:
             self.write({"shippingbo_state": "error"})
-            self.message_post(body="Shippingbo : envoi de la réception échoué (%s) — %s" % (status, res))
+            self.message_post(body=self.env._("Shippingbo: receipt sending failed (%s) — %s") % (status, res))
 
     def _build_supply_capsule_payload(self):
         """Return (payload, products skipped for lack of default_code)."""
@@ -112,7 +112,7 @@ class StockPicking(models.Model):
         if status < 300 or status == 404:
             return True
         self.message_post(
-            body="Shippingbo : suppression de la capsule %s refusée (%s) — %s"
+            body=self.env._("Shippingbo: deletion of capsule %s refused (%s) — %s")
                  % (self.shippingbo_capsule_id, status, res)
         )
         return False
@@ -122,7 +122,7 @@ class StockPicking(models.Model):
         for picking in self.filtered(lambda p: p.shippingbo_capsule_id and p.state not in ("done", "cancel")):
             if picking.shippingbo_state in SHIPPINGBO_CAPSULE_LOCKED_STATES:
                 picking.message_post(
-                    body="Shippingbo : réception déjà commencée, la modification n'est pas transmise."
+                    body=self.env._("Shippingbo: reception already started, the change is not sent.")
                 )
                 continue
             if picking._shippingbo_delete_capsule():
@@ -133,12 +133,12 @@ class StockPicking(models.Model):
         for picking in self.filtered(lambda p: p.shippingbo_capsule_id and p.shippingbo_state != "cancelled"):
             if picking.shippingbo_state in SHIPPINGBO_CAPSULE_LOCKED_STATES:
                 picking.message_post(
-                    body="Shippingbo : réception déjà commencée, annulation à traiter dans Shippingbo."
+                    body=self.env._("Shippingbo: reception already started, cancel it in Shippingbo.")
                 )
                 continue
             if picking._shippingbo_delete_capsule():
                 picking.write({"shippingbo_state": "cancelled"})
-                picking.message_post(body="Shippingbo : réception annulée.")
+                picking.message_post(body=self.env._("Shippingbo: receipt cancelled."))
 
     def action_cancel(self):
         res = super().action_cancel()
@@ -163,9 +163,9 @@ class StockPicking(models.Model):
         if state and picking.shippingbo_state != state:
             picking.write({"shippingbo_state": state})
             if remote_state == "in_trouble":
-                picking.message_post(body="⚠️ Shippingbo : réception en anomalie (in_trouble).")
+                picking.message_post(body=self.env._("⚠️ Shippingbo: receipt in trouble (in_trouble)."))
             else:
-                picking.message_post(body="Shippingbo : statut réception → %s" % remote_state)
+                picking.message_post(body=self.env._("Shippingbo: receipt status → %s") % remote_state)
 
         if remote_state != "canceled" and open_picking:
             open_picking._shippingbo_apply_capsule_reception(
@@ -227,14 +227,14 @@ class StockPicking(models.Model):
             to_receive.append((targets, qty))
 
         if unresolved:
-            self.message_post(body="%s : ligne(s) non résolue(s) : %s" % (label, ", ".join(unresolved)))
+            self.message_post(body=self.env._("%s: unresolved line(s): %s") % (label, ", ".join(unresolved)))
         if not to_receive:
             return
 
         tracked = [t.product_id for t, _qty in to_receive if t.product_id.tracking != "none"]
         if tracked:
             self.message_post(
-                body="%s : articles suivis par lot, réception à valider manuellement : %s"
+                body=self.env._("%s: products tracked by lot, validate the receipt manually: %s")
                      % (label, ", ".join(p.display_name for p in tracked))
             )
             return
@@ -254,6 +254,6 @@ class StockPicking(models.Model):
             })
             for bo in backorders:
                 bo.message_post(
-                    body="Reliquat de %s — rattaché à la capsule Shippingbo %s."
+                    body=self.env._("Backorder of %s — attached to Shippingbo capsule %s.")
                          % (self.name, self.shippingbo_capsule_id)
                 )

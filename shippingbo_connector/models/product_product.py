@@ -13,10 +13,10 @@ class ProductProduct(models.Model):
         string="Shippingbo Product ID",
         copy=False,
         index=True,
-        help="ID du produit côté Shippingbo, posé à la première synchronisation.",
+        help="Shippingbo product ID, set by the first synchronization.",
     )
     shippingbo_last_sync = fields.Datetime(
-        string="Dernière synchro Shippingbo",
+        string="Last Shippingbo Sync",
         copy=False,
     )
 
@@ -78,7 +78,7 @@ class ProductProduct(models.Model):
             sbo_id = self._shippingbo_extract_id(res)
 
         if not self._shippingbo_extract_id(res):
-            raise ValueError("réponse Shippingbo inattendue : %s" % res)
+            raise ValueError("unexpected Shippingbo response: %s" % res)
 
         self.write({
             "shippingbo_product_id": sbo_id,

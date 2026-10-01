@@ -29,7 +29,7 @@
     </record>
 
     <record id="action_shippingbo_carrier_mapping" model="ir.actions.act_window">
-        <field name="name">Mapping transporteurs</field>
+        <field name="name">Carrier Mapping</field>
         <field name="res_model">shippingbo.carrier.mapping</field>
         <field name="view_mode">list,form</field>
         <field name="context">{'active_test': False}</field>
@@ -41,7 +41,7 @@
               sequence="90"
               groups="base.group_system"/>
     <menuitem id="menu_shippingbo_carrier_mapping"
-              name="Mapping transporteurs"
+              name="Carrier Mapping"
               parent="menu_shippingbo_root"
               action="action_shippingbo_carrier_mapping"
               sequence="10"/>

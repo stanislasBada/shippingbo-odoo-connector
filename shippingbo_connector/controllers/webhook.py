@@ -30,8 +30,9 @@ class ShippingboWebhook(http.Controller):
         summary = "%s id=%s state=%s" % (object_class, obj.get("id"), obj.get("state"))
         _logger.info("ShippingBo webhook received: %s", summary)
 
-        # Run as OdooBot so that chatter messages are not authored by the public user.
-        Picking = request.env["stock.picking"].with_user(SUPERUSER_ID)
+        # Run as OdooBot, in its language, so that chatter messages are not authored by the public user.
+        env = request.env(user=SUPERUSER_ID)
+        Picking = env["stock.picking"].with_context(lang=env.user.lang)
         try:
             with request.env.cr.savepoint():
                 if object_class == "Shipment":

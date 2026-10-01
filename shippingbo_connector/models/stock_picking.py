@@ -30,28 +30,28 @@ class StockPicking(models.Model):
         string="Shippingbo Order ID",
         copy=False,
         index=True,
-        help="ID de la commande côté Shippingbo. Posé à l'envoi, utilisé pour les mises à jour.",
+        help="Shippingbo order ID, set when the delivery is sent and used for updates.",
     )
     shippingbo_items_map = fields.Text(
         string="Shippingbo Items Map",
         copy=False,
         help=(
-            "JSON {order_item_id: {product_id, units}} construit à l'envoi. "
-            "Permet la conversion colis → unités au retour du webhook shipment."
+            "JSON {order_item_id: {product_id, units}} built when the delivery is sent. "
+            "Converts cartons into units when the shipment webhook comes back."
         ),
     )
     shippingbo_state = fields.Selection(
         selection=[
-            ("pending",      "En attente"),
-            ("transmitted",  "Transmis"),
-            ("in_progress",  "En préparation"),
-            ("shipped",      "Expédié"),
-            ("delivered",    "Livré"),
-            ("received",     "Réceptionné"),
-            ("cancelled",    "Annulé"),
-            ("error",        "Erreur"),
+            ("pending",      "Pending"),
+            ("transmitted",  "Transmitted"),
+            ("in_progress",  "In Progress"),
+            ("shipped",      "Shipped"),
+            ("delivered",    "Delivered"),
+            ("received",     "Received"),
+            ("cancelled",    "Cancelled"),
+            ("error",        "Error"),
         ],
-        string="Statut Shippingbo",
+        string="Shippingbo Status",
         copy=False,
         default=False,
     )
@@ -59,11 +59,11 @@ class StockPicking(models.Model):
         string="Shippingbo Shipment ID",
         copy=False,
         index=True,
-        help="ID du shipment Shippingbo ayant validé ce BL (anti-doublon webhook).",
+        help="Shippingbo shipment that validated this delivery (webhook deduplication).",
     )
     shippingbo_earliest_ship_date = fields.Date(
-        string="Date de préparation Shippingbo",
-        help="Date à partir de laquelle Shippingbo peut expédier cette commande.",
+        string="Shippingbo Preparation Date",
+        help="Date from which Shippingbo may ship this order.",
     )
 
     def action_send_to_shippingbo(self):
@@ -87,7 +87,7 @@ class StockPicking(models.Model):
                 self._shippingbo_send()
         except Exception as e:
             _logger.exception("ShippingBo: auto send failed for picking %s", self.name)
-            self.message_post(body="Shippingbo : envoi automatique échoué — %s" % e)
+            self.message_post(body=self.env._("Shippingbo: automatic send failed — %s") % e)
             self.write({"shippingbo_state": "error"})
 
     def _send_to_shippingbo(self):
@@ -108,7 +108,7 @@ class StockPicking(models.Model):
 
         payload, items_meta = self._build_shippingbo_payload(so)
         if not payload["order"].get("order_items_attributes"):
-            self.message_post(body="Shippingbo : aucune ligne à envoyer (pas d'article 'consu' avec qté > 0).")
+            self.message_post(body=self.env._("Shippingbo: no line to send (no 'consu' product with a quantity > 0)."))
             return
 
         response = so.send_to_shippingbo(payload)
@@ -258,7 +258,7 @@ class StockPicking(models.Model):
                 response = {}
 
         if not isinstance(response, dict):
-            self.message_post(body="Shippingbo : réponse inattendue — %s" % response)
+            self.message_post(body=self.env._("Shippingbo: unexpected response — %s") % response)
             return
 
         shippingbo_id = (
@@ -295,16 +295,17 @@ class StockPicking(models.Model):
                 vals["shippingbo_items_map"] = json.dumps(items_map)
             self.write(vals)
             self.message_post(
-                body="Commande envoyée à Shippingbo. shippingbo_order_id=%s" % shippingbo_id
+                body=self.env._("Order sent to Shippingbo. shippingbo_order_id=%s") % shippingbo_id
             )
             if not items_map:
                 self.message_post(
-                    body="⚠️ Shippingbo : table order_item/produit vide "
-                         "(order_items absents ou source_ref non rapproché) — suivi BL à surveiller."
+                    body=self.env._(
+                        "⚠️ Shippingbo: empty order_item/product map (no order_items or unmatched source_ref) — watch this delivery."
+                    )
                 )
         else:
             self.message_post(
-                body="Shippingbo : commande envoyée mais pas d'ID retourné. Réponse=%s" % response
+                body=self.env._("Shippingbo: order sent but no ID returned. Response=%s") % response
             )
             self.write({"shippingbo_state": "error"})
 
@@ -336,7 +337,7 @@ class StockPicking(models.Model):
                 order_id, shipment_id,
             )
             pickings[-1].message_post(
-                body="Shippingbo shipment (id=%s) reçu mais aucun BL ouvert pour cette commande."
+                body=self.env._("Shippingbo shipment (id=%s) received but no open delivery for this order.")
                      % shipment_id
             )
             return
@@ -357,7 +358,7 @@ class StockPicking(models.Model):
         for picking in targets:
             if state and picking.shippingbo_state != state:
                 picking.write({"shippingbo_state": state})
-            picking.message_post(body="Shippingbo : statut commande → %s" % remote_state)
+            picking.message_post(body=self.env._("Shippingbo: order status → %s") % remote_state)
 
     def _process_shipment_webhook(self, shipment, tracking_only=False):
         self.ensure_one()
@@ -370,7 +371,7 @@ class StockPicking(models.Model):
             carrier = self._find_odoo_carrier(carrier_name)
             if carrier == "multiple":
                 self.message_post(
-                    body="Shippingbo shipment (id=%s) : matching transporteur ambigu pour '%s'."
+                    body=self.env._("Shippingbo shipment (id=%s): ambiguous carrier match for '%s'.")
                          % (shipment_id, carrier_name)
                 )
             elif carrier:
@@ -378,20 +379,20 @@ class StockPicking(models.Model):
                     self.write({"carrier_id": carrier.id})
             else:
                 self.message_post(
-                    body="Shippingbo shipment (id=%s) : aucun transporteur Odoo pour '%s'."
+                    body=self.env._("Shippingbo shipment (id=%s): no Odoo carrier for '%s'.")
                          % (shipment_id, carrier_name)
                 )
         if tracking_ref and tracking_ref != self.carrier_tracking_ref:
             self.write({"carrier_tracking_ref": tracking_ref})
         if tracking_url:
-            self.message_post(body="Shippingbo : suivi colis %s" % tracking_url)
+            self.message_post(body=self.env._("Shippingbo: parcel tracking %s") % tracking_url)
 
         if tracking_only or self.state in ("done", "cancel"):
             return
         items_ship = shipment.get("order_items_shipments") or []
         if not items_ship:
             self.message_post(
-                body="Shippingbo shipment (id=%s) : pas d'order_items_shipments." % shipment_id
+                body=self.env._("Shippingbo shipment (id=%s): no order_items_shipments.") % shipment_id
             )
         else:
             self._apply_shipped_quantities(items_ship, shipment_id)
@@ -423,14 +424,14 @@ class StockPicking(models.Model):
 
         if unresolved:
             self.message_post(
-                body="Shippingbo shipment (id=%s) : %s item(s) non résolus : %s"
+                body=self.env._("Shippingbo shipment (id=%s): %s unresolved item(s): %s")
                      % (shipment_id, len(unresolved), unresolved)
             )
 
         if not qty_by_product:
             # button_validate would otherwise validate the whole reserved quantity.
             self.message_post(
-                body="Shippingbo shipment (id=%s) : aucune quantité exploitable — BL non validé."
+                body=self.env._("Shippingbo shipment (id=%s): no usable quantity — delivery not validated.")
                      % shipment_id
             )
             return
@@ -441,7 +442,7 @@ class StockPicking(models.Model):
             product_moves = moves.filtered(lambda m: m.product_id.id == pid)
             if not product_moves:
                 self.message_post(
-                    body="Shippingbo shipment (id=%s) : produit id=%s expédié absent du BL."
+                    body=self.env._("Shippingbo shipment (id=%s): shipped product id=%s is not in the delivery.")
                          % (shipment_id, pid)
                 )
                 continue
@@ -472,7 +473,7 @@ class StockPicking(models.Model):
             })
             for bo in backorders:
                 bo.message_post(
-                    body="Reliquat de %s — rattaché à la commande Shippingbo %s."
+                    body=self.env._("Backorder of %s — attached to Shippingbo order %s.")
                          % (self.name, self.shippingbo_order_id)
                 )
 
@@ -494,11 +495,11 @@ class StockPicking(models.Model):
                     wiz.process() if backorder else wiz.process_cancel_backorder()
                 elif isinstance(res, dict):
                     self.message_post(
-                        body="%s : validation en attente (assistant %s)." % (label, res.get("res_model"))
+                        body=self.env._("%s: validation pending (wizard %s).") % (label, res.get("res_model"))
                     )
         except Exception as e:
             _logger.exception("ShippingBo: auto validation failed for picking %s", self.name)
-            self.message_post(body="%s : validation auto échouée — %s" % (label, e))
+            self.message_post(body=self.env._("%s: automatic validation failed — %s") % (label, e))
             return False
         return self.state == "done"
 
@@ -534,10 +535,10 @@ class StockPicking(models.Model):
             self.shippingbo_order_id, "canceled"
         )
         if res.get("detail") == "error":
-            self.message_post(body="Shippingbo : annulation échouée.")
+            self.message_post(body=self.env._("Shippingbo: cancellation failed."))
         else:
             self.write({"shippingbo_state": "cancelled"})
-            self.message_post(body="Shippingbo : commande annulée.")
+            self.message_post(body=self.env._("Shippingbo: order cancelled."))
 
     @staticmethod
     def _item_line(source_ref, product_ref, product_id, title,

@@ -33,21 +33,21 @@
                 </block>
                 <block title="Deliveries">
                     <setting string="Auto-send ready deliveries"
-                             help="Envoyer automatiquement le BL à Shippingbo dès qu'il est prêt (réservé).">
+                             help="Automatically send the delivery to Shippingbo as soon as it is ready (reserved).">
                         <field name="shippingbo_auto_send_on_ready"/>
                     </setting>
                     <setting string="Auto-send purchase receipts"
-                             help="Envoyer automatiquement les bons de réception à Shippingbo à la confirmation de la commande d'achat.">
+                             help="Automatically send receipts to Shippingbo when the purchase order is confirmed.">
                         <field name="shippingbo_auto_send_purchase_on_confirm"/>
                     </setting>
                     <setting string="Auto-send returns"
-                             help="Envoyer automatiquement à Shippingbo les retours créés depuis un BL transmis à Shippingbo.">
+                             help="Automatically send to Shippingbo the returns created from a delivery sent to Shippingbo.">
                         <field name="shippingbo_auto_send_returns"/>
                     </setting>
                     <setting string="Carrier Mapping"
-                             help="Correspondance entre transporteurs Odoo et Shippingbo.">
+                             help="Mapping between Odoo and Shippingbo carriers.">
                         <button name="%(shippingbo_connector.action_shippingbo_carrier_mapping)d"
-                                type="action" string="Mapping transporteurs"
+                                type="action" string="Carrier Mapping"
                                 icon="oi-arrow-right" class="btn-link"/>
                     </setting>
                 </block>

@@ -7,20 +7,20 @@
         <field name="arch" type="xml">
             <xpath expr="//header" position="inside">
                 <button name="action_send_to_shippingbo" type="object"
-                        string="Envoyer à Shippingbo"
+                        string="Send to Shippingbo"
                         invisible="state in ('draft', 'done', 'cancel')
                                    or (picking_type_code == 'outgoing' and shippingbo_order_id)
                                    or (picking_type_code == 'incoming' and (shippingbo_capsule_id or shippingbo_return_order_id or not (purchase_id or return_id)))
                                    or picking_type_code not in ('outgoing', 'incoming')"/>
                 <button name="action_shippingbo_resend_capsule" type="object"
-                        string="Renvoyer à Shippingbo"
-                        confirm="Supprimer puis recréer la réception côté Shippingbo ?"
+                        string="Resend to Shippingbo"
+                        confirm="Delete and recreate the receipt in Shippingbo?"
                         invisible="picking_type_code != 'incoming' or not shippingbo_capsule_id
                                    or shippingbo_state not in ('transmitted', 'error')
                                    or state in ('done', 'cancel')"/>
                 <button name="action_cancel_shippingbo" type="object"
-                        string="Annuler sur Shippingbo"
-                        confirm="Annuler côté Shippingbo ?"
+                        string="Cancel in Shippingbo"
+                        confirm="Cancel in Shippingbo?"
                         invisible="not (shippingbo_order_id or shippingbo_capsule_id or shippingbo_return_order_id)
                                    or shippingbo_state == 'cancelled' or state in ('done', 'cancel')"/>
             </xpath>

@@ -8,13 +8,13 @@ class ShippingboCarrierMapping(models.Model):
 
     odoo_carrier_id = fields.Many2one(
         comodel_name="delivery.carrier",
-        string="Transporteur Odoo",
+        string="Odoo Carrier",
         required=True,
         ondelete="cascade",
     )
     shippingbo_carrier_name = fields.Char(
-        string="Nom transporteur Shippingbo",
+        string="Shippingbo Carrier Name",
         required=True,
-        help="Valeur exacte du champ carrier_name côté Shippingbo.",
+        help="Exact value of the carrier_name field in Shippingbo.",
     )
     active = fields.Boolean(default=True)

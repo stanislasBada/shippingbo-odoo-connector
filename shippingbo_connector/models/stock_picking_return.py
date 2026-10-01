@@ -49,7 +49,7 @@ class StockPicking(models.Model):
             return
         if not self.return_id.shippingbo_order_id:
             self.message_post(
-                body="Shippingbo : le BL d'origine %s n'a pas été envoyé à Shippingbo, retour non transmis."
+                body=self.env._("Shippingbo: the original delivery %s was not sent to Shippingbo, return not sent.")
                      % self.return_id.name
             )
             return
@@ -57,21 +57,21 @@ class StockPicking(models.Model):
         payload, missing = self._build_return_order_payload()
         if missing:
             self.message_post(
-                body="Shippingbo : articles sans référence interne non envoyés : %s"
+                body=self.env._("Shippingbo: products without internal reference not sent: %s")
                      % ", ".join(missing.mapped("display_name"))
             )
         if not payload["return_order"]["return_order_expected_items_attributes"]:
-            self.message_post(body="Shippingbo : aucune ligne à envoyer.")
+            self.message_post(body=self.env._("Shippingbo: no line to send."))
             return
 
         status, res = self.env["shippingbo.api"]._shippingbo_call("POST", "/return_orders", payload)
         return_order_id = self._shippingbo_extract_return_order(res).get("id")
         if return_order_id:
             self.write({"shippingbo_return_order_id": return_order_id, "shippingbo_state": "transmitted"})
-            self.message_post(body="Retour envoyé à Shippingbo. return_order_id=%s" % return_order_id)
+            self.message_post(body=self.env._("Return sent to Shippingbo. return_order_id=%s") % return_order_id)
         else:
             self.write({"shippingbo_state": "error"})
-            self.message_post(body="Shippingbo : envoi du retour échoué (%s) — %s" % (status, res))
+            self.message_post(body=self.env._("Shippingbo: return sending failed (%s) — %s") % (status, res))
 
     def _build_return_order_payload(self):
         """Return (payload, products skipped for lack of default_code)."""
@@ -105,7 +105,7 @@ class StockPicking(models.Model):
         for picking in pickings:
             if picking.shippingbo_state in ("in_progress", "received"):
                 picking.message_post(
-                    body="Shippingbo : retour déjà réceptionné en partie, annulation à traiter dans Shippingbo."
+                    body=self.env._("Shippingbo: return already partially received, cancel it in Shippingbo.")
                 )
                 continue
             status, res = self.env["shippingbo.api"]._shippingbo_call(
@@ -113,10 +113,10 @@ class StockPicking(models.Model):
             )
             if status < 300:
                 picking.write({"shippingbo_state": "cancelled"})
-                picking.message_post(body="Shippingbo : retour annulé.")
+                picking.message_post(body=self.env._("Shippingbo: return cancelled."))
             else:
                 picking.message_post(
-                    body="Shippingbo : annulation du retour refusée (%s) — %s" % (status, res)
+                    body=self.env._("Shippingbo: return cancellation refused (%s) — %s") % (status, res)
                 )
 
     @api.model
@@ -136,9 +136,9 @@ class StockPicking(models.Model):
         if state and picking.shippingbo_state != state:
             picking.write({"shippingbo_state": state})
             if remote_state == "in_trouble":
-                picking.message_post(body="⚠️ Shippingbo : retour en anomalie (in_trouble).")
+                picking.message_post(body=self.env._("⚠️ Shippingbo: return in trouble (in_trouble)."))
             else:
-                picking.message_post(body="Shippingbo : statut retour → %s" % remote_state)
+                picking.message_post(body=self.env._("Shippingbo: return status → %s") % remote_state)
 
         if remote_state != "canceled" and open_picking:
             open_picking._shippingbo_apply_return_reception(return_order, pickings)
@@ -178,7 +178,7 @@ class StockPicking(models.Model):
         label = "Shippingbo return order (id=%s)" % self.shippingbo_return_order_id
         received, unknown = self._shippingbo_return_qty_by_product(return_order, "return_order_items")
         if unknown:
-            self.message_post(body="%s : produit(s) Shippingbo non résolu(s) : %s" % (label, ", ".join(unknown)))
+            self.message_post(body=self.env._("%s: unresolved Shippingbo product(s): %s") % (label, ", ".join(unknown)))
 
         open_moves = self.move_ids.filtered(lambda m: m.state not in ("done", "cancel"))
         done_moves = return_pickings.move_ids.filtered(lambda m: m.state == "done")
@@ -193,20 +193,20 @@ class StockPicking(models.Model):
                 continue
             targets = open_moves.filtered(lambda m: m.product_id == product)
             if not targets:
-                self.message_post(body="%s : %s reçu mais absent du retour." % (label, product.display_name))
+                self.message_post(body=self.env._("%s: %s received but not in the return.") % (label, product.display_name))
                 continue
             to_receive.append((targets, qty))
 
         closed = return_order.get("state") == "closed"
         if not to_receive:
             if closed:
-                self.message_post(body="%s : retour clôturé, reliquat restant à annuler manuellement." % label)
+                self.message_post(body=self.env._("%s: return closed, cancel the remaining backorder manually.") % label)
             return
 
         tracked = [t.product_id for t, _qty in to_receive if t.product_id.tracking != "none"]
         if tracked:
             self.message_post(
-                body="%s : articles suivis par lot, retour à valider manuellement : %s"
+                body=self.env._("%s: products tracked by lot, validate the return manually: %s")
                      % (label, ", ".join(p.display_name for p in tracked))
             )
             return
@@ -225,7 +225,7 @@ class StockPicking(models.Model):
             })
             for bo in backorders:
                 bo.message_post(
-                    body="Reliquat de %s — rattaché au retour Shippingbo %s."
+                    body=self.env._("Backorder of %s — attached to Shippingbo return %s.")
                          % (self.name, self.shippingbo_return_order_id)
                 )
 
@@ -240,7 +240,7 @@ class StockPicking(models.Model):
             return_order, "returned_product_not_restockables"
         )
         if unknown:
-            picking.message_post(body="%s : produit(s) non restockable(s) non résolu(s) : %s" % (label, ", ".join(unknown)))
+            picking.message_post(body=self.env._("%s: unresolved non-restockable product(s): %s") % (label, ", ".join(unknown)))
 
         Scrap = self.env["stock.scrap"]
         scrapped = Scrap.search([("picking_id", "in", done.ids), ("state", "=", "done")])
@@ -250,7 +250,7 @@ class StockPicking(models.Model):
                 continue
             if product.tracking != "none":
                 picking.message_post(
-                    body="%s : %s non restockable suivi par lot, mise au rebut à faire manuellement."
+                    body=self.env._("%s: %s is not restockable and tracked by lot, scrap it manually.")
                          % (label, product.display_name)
                 )
                 continue
@@ -264,10 +264,10 @@ class StockPicking(models.Model):
                         "location_id":    picking.location_dest_id.id,
                         "origin":         picking.name,
                     }).do_scrap()
-                picking.message_post(body="%s : %s × %s mis au rebut (non restockable)." % (label, qty, product.display_name))
+                picking.message_post(body=self.env._("%s: %s × %s scrapped (not restockable).") % (label, qty, product.display_name))
             except Exception as e:
                 _logger.exception("ShippingBo: scrap failed for picking %s", picking.name)
-                picking.message_post(body="%s : mise au rebut échouée pour %s — %s" % (label, product.display_name, e))
+                picking.message_post(body=self.env._("%s: scrap failed for %s — %s") % (label, product.display_name, e))
 
     @api.model
     def cron_shippingbo_poll_return_orders(self):
