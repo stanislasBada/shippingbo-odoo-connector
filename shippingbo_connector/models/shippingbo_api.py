@@ -1,7 +1,10 @@
+import json
 import requests
 import logging
 import time
-from odoo import models, api
+from datetime import timedelta
+
+from odoo import SUPERUSER_ID, api, fields, models
 
 _logger = logging.getLogger(__name__)
 
@@ -57,21 +60,72 @@ class ShippingboApi(models.AbstractModel):
         }
 
         _logger.info('ShippingBo %s %s payload=%s', method, endpoint, payload)
-        r = requests.request(method, url, json=payload, headers=headers)
-
-        if r.status_code == 401:
-            _logger.warning('ShippingBo token expired, refreshing')
-            config.set_param('shippingbo.token_expiration', 0)
-            headers['Authorization'] = f'Bearer {self._shippingbo_get_token()}'
+        try:
             r = requests.request(method, url, json=payload, headers=headers)
+
+            if r.status_code == 401:
+                _logger.warning('ShippingBo token expired, refreshing')
+                config.set_param('shippingbo.token_expiration', 0)
+                headers['Authorization'] = f'Bearer {self._shippingbo_get_token()}'
+                r = requests.request(method, url, json=payload, headers=headers)
+        except requests.RequestException as e:
+            self._shippingbo_log_call('ERROR', method, endpoint, payload, 'network error', e)
+            raise
 
         if r.status_code >= 300:
             _logger.error('ShippingBo error %s %s', r.status_code, r.text)
+
+        # Reads are frequent (crons): only failed ones are traced.
+        if method != 'GET' or r.status_code >= 300:
+            self._shippingbo_log_call(
+                'ERROR' if r.status_code >= 300 else 'INFO',
+                method, endpoint, payload, r.status_code, r.text,
+            )
 
         try:
             return r.status_code, r.json()
         except Exception:
             return r.status_code, {'detail': 'error'}
+
+    def _shippingbo_log_call(self, level, method, endpoint, payload, status, response):
+        self._shippingbo_log(
+            'shippingbo.api', level,
+            '%s %s -> %s\n\nPayload:\n%s\n\nResponse:\n%s' % (
+                method, endpoint, status,
+                json.dumps(payload, ensure_ascii=False, indent=2, default=str) if payload is not None else '-',
+                str(response)[:10000],
+            ),
+            path=endpoint, func=method,
+        )
+
+    @api.model
+    def cron_shippingbo_purge_logs(self, days=7):
+        limit = fields.Datetime.now() - timedelta(days=days)
+        self.env['ir.logging'].sudo().search([
+            ('name', 'in', ('shippingbo.api', 'shippingbo.webhook')),
+            ('create_date', '<', limit),
+        ]).unlink()
+
+    @api.model
+    def _shippingbo_log(self, name, level, message, path='', func=''):
+        """Trace in Settings > Technical > Logging (ir.logging).
+
+        Uses its own cursor so the entry survives a rollback of the calling transaction.
+        """
+        try:
+            with self.env.registry.cursor() as cr:
+                api.Environment(cr, SUPERUSER_ID, {})['ir.logging'].create({
+                    'name': name,
+                    'type': 'server',
+                    'dbname': cr.dbname,
+                    'level': level,
+                    'message': message,
+                    'path': path,
+                    'func': func,
+                    'line': '0',
+                })
+        except Exception:
+            _logger.exception('ShippingBo: could not write ir.logging entry')
 
     @api.model
     def sync_stock_from_shippingbo(self):
