@@ -1,7 +1,7 @@
 {
     "name": "ShippingBo Connector",
-    "version": "19.0.1.1.0",
-    "summary": "Sync stock and orders between Odoo and ShippingBo",
+    "version": "19.0.2.0.0",
+    "summary": "Deliveries, purchase receipts, returns, products and stock synced between Odoo and ShippingBo",
     "author": "Stanislas Badatcheff",
     "website": "https://catalyt.fr",
     "license": "OPL-1",
@@ -20,7 +20,7 @@
         "data/log_purge_cron.xml",
     ],
     "images": ["static/description/icon.png"],
-    "price": 99.0,
+    "price": 349.0,
     "currency": "EUR",
     "installable": True,
     "application": False,
