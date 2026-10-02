@@ -11,24 +11,27 @@
   </defs>
   <rect width="512" height="512" fill="url(#bg)"/>
 
-  <!-- sync arrows -->
-  <g fill="none" stroke="#3B97E3" stroke-width="26" stroke-linecap="round">
-    <path d="M 108 214 A 156 156 0 0 1 368 146"/>
-    <path d="M 404 298 A 156 156 0 0 1 144 366"/>
+  <!-- pictogram: parcel inside sync arrows, upper part -->
+  <g transform="translate(256 168) scale(0.62) translate(-256 -256)">
+    <g fill="none" stroke="#3B97E3" stroke-width="28" stroke-linecap="round">
+      <path d="M 108 214 A 156 156 0 0 1 368 146"/>
+      <path d="M 404 298 A 156 156 0 0 1 144 366"/>
+    </g>
+    <polygon points="392,108 398,190 322,168" fill="#3B97E3"/>
+    <polygon points="120,404 114,322 190,344" fill="#3B97E3"/>
+    <g stroke="#0E1420" stroke-width="6" stroke-linejoin="round">
+      <polygon points="256,170 342,212 256,254 170,212" fill="url(#top)"/>
+      <polygon points="170,212 256,254 256,346 170,304" fill="#FFFFFF"/>
+      <polygon points="342,212 256,254 256,346 342,304" fill="#C9D5E6"/>
+    </g>
+    <polygon points="213,191 299,233 299,251 285,244 285,240 213,205" fill="#3B97E3"/>
+    <polygon points="285,240 299,233 299,268 285,275" fill="#2C7CC1"/>
   </g>
-  <polygon points="392,108 398,190 322,168" fill="#3B97E3"/>
-  <polygon points="120,404 114,322 190,344" fill="#3B97E3"/>
 
-  <!-- parcel (isometric) -->
-  <g stroke="#0E1420" stroke-width="6" stroke-linejoin="round">
-    <polygon points="256,170 342,212 256,254 170,212" fill="url(#top)"/>
-    <polygon points="170,212 256,254 256,346 170,304" fill="#FFFFFF"/>
-    <polygon points="342,212 256,254 256,346 342,304" fill="#C9D5E6"/>
+  <!-- keywords -->
+  <g font-family="-apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">
+    <text x="256" y="352" font-size="58" font-weight="800" fill="#FFFFFF">ShippingBo</text>
+    <text x="256" y="408" font-size="42" font-weight="700" fill="#3B97E3">⇄ Odoo</text>
+    <text x="256" y="458" font-size="22" font-weight="600" fill="#9DB7D5" letter-spacing="1">ORDERS · RECEIPTS · RETURNS · STOCK</text>
   </g>
-  <!-- tape -->
-  <polygon points="213,191 299,233 299,251 285,244 285,240 213,205" fill="#3B97E3" opacity="0.9"/>
-  <polygon points="285,240 299,233 299,268 285,275" fill="#2C7CC1"/>
-
-  <!-- Catalyt signature dot -->
-  <circle cx="440" cy="440" r="26" fill="#3B97E3"/>
 </svg>
