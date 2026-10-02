@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_picking_form_shippingbo" model="ir.ui.view">
+        <field name="name">stock.picking.form.shippingbo</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_send_to_shippingbo" type="object"
+                        string="Send to Shippingbo"
+                        invisible="not shippingbo_warehouse_enabled
+                                   or state in ('draft', 'done', 'cancel')
+                                   or (picking_type_code == 'outgoing' and shippingbo_order_id)
+                                   or (picking_type_code == 'incoming' and (shippingbo_capsule_id or shippingbo_return_order_id or not (purchase_id or return_id)))
+                                   or picking_type_code not in ('outgoing', 'incoming')"/>
+                <button name="action_shippingbo_resend_capsule" type="object"
+                        string="Resend to Shippingbo"
+                        confirm="Delete and recreate the receipt in Shippingbo?"
+                        invisible="picking_type_code != 'incoming' or not shippingbo_capsule_id
+                                   or shippingbo_state not in ('transmitted', 'error')
+                                   or state in ('done', 'cancel')"/>
+                <button name="action_cancel_shippingbo" type="object"
+                        string="Cancel in Shippingbo"
+                        confirm="Cancel in Shippingbo?"
+                        invisible="not (shippingbo_order_id or shippingbo_capsule_id or shippingbo_return_order_id)
+                                   or shippingbo_state == 'cancelled' or state in ('done', 'cancel')"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Shippingbo" name="shippingbo"
+                      invisible="picking_type_code not in ('outgoing', 'incoming')">
+                    <group>
+                        <group>
+                            <field name="shippingbo_order_id" readonly="1"
+                                   invisible="picking_type_code != 'outgoing'"/>
+                            <field name="shippingbo_capsule_id" readonly="1"
+                                   invisible="picking_type_code != 'incoming' or return_id"/>
+                            <field name="shippingbo_return_order_id" readonly="1"
+                                   invisible="not return_id"/>
+                            <field name="shippingbo_state" readonly="1"/>
+                            <field name="shippingbo_shipment_id" readonly="1"
+                                   invisible="picking_type_code != 'outgoing'"/>
+                        </group>
+                        <group invisible="picking_type_code != 'outgoing'">
+                            <field name="shippingbo_earliest_ship_date"/>
+                            <field name="carrier_tracking_ref"/>
+                            <field name="carrier_tracking_url" widget="url"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

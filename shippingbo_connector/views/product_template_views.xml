@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_template_property_form_shippingbo" model="ir.ui.view">
+        <field name="name">product.template.form.shippingbo</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="stock.view_template_property_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='inventory']" position="inside">
+                <group string="Shippingbo" name="shippingbo" invisible="not is_storable">
+                    <field name="shippingbo_stock_sync"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_template_search_view_shippingbo" model="ir.ui.view">
+        <field name="name">product.template.search.shippingbo</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_search_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='filter_to_sell']" position="before">
+                <filter string="Shippingbo Stock Sync" name="shippingbo_stock_sync"
+                        domain="[('shippingbo_stock_sync', '=', True)]"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_variant_easy_edit_view_shippingbo" model="ir.ui.view">
+        <field name="name">product.product.variant.form.shippingbo</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_variant_easy_edit_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="Shippingbo" name="shippingbo">
+                    <field name="shippingbo_product_id" readonly="1"/>
+                    <field name="shippingbo_last_sync" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_shippingbo_sync_products" model="ir.actions.server">
+        <field name="name">Sync to Shippingbo</field>
+        <field name="model_id" ref="product.model_product_template"/>
+        <field name="binding_model_id" ref="product.model_product_template"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">records.action_shippingbo_sync_products()</field>
+    </record>
+</odoo>
