@@ -24,6 +24,11 @@ SHIPPINGBO_CAPSULE_LOCKED_STATES = ("in_progress", "received", "cancelled")
 class StockPicking(models.Model):
     _inherit = "stock.picking"
 
+    shippingbo_container = fields.Char(
+        string="Container Number",
+        help="Sent to Shippingbo with the receipt, and used as lot number at reception "
+             "when Shippingbo provides none.",
+    )
     shippingbo_capsule_id = fields.Integer(
         string="Shippingbo Supply Capsule ID",
         copy=False,
@@ -78,6 +83,7 @@ class StockPicking(models.Model):
             "supply_capsule": {
                 "source_ref":    self.name,
                 "external_ref":  self.purchase_id.name or None,
+                "container":     self.shippingbo_container or None,
                 "supplier_name": partner.name,
                 "supplier_code": partner.ref or partner.name,
                 "expected_delivery_date": (
@@ -169,7 +175,8 @@ class StockPicking(models.Model):
 
         if remote_state != "canceled" and open_picking:
             open_picking._shippingbo_apply_capsule_reception(
-                capsule.get("supply_capsule_items") or [], pickings
+                capsule.get("supply_capsule_items") or [], pickings,
+                capsule.get("container") or open_picking.shippingbo_container,
             )
 
     @api.model
@@ -191,9 +198,13 @@ class StockPicking(models.Model):
             except Exception:
                 _logger.exception("ShippingBo: polling failed for supply capsule %s", capsule_id)
 
-    def _shippingbo_apply_capsule_reception(self, items, capsule_pickings):
+    def _shippingbo_apply_capsule_reception(self, items, capsule_pickings, container=None):
         """Receive the difference between Shippingbo's received_quantity and what
-        the capsule pickings already received, so that a replayed webhook is a no-op."""
+        the capsule pickings already received, so that a replayed webhook is a no-op.
+
+        Lot of lot-tracked products: the single received serial of the line, otherwise
+        the capsule container number (one lot per container).
+        """
         self.ensure_one()
         label = "Shippingbo supply capsule (id=%s)" % self.shippingbo_capsule_id
         Move = self.env["stock.move"]
@@ -202,6 +213,7 @@ class StockPicking(models.Model):
 
         to_receive = []
         unresolved = []
+        manual = []
         for item in items:
             source_ref = str(item.get("source_ref") or "")
             ref_move = Move.browse(int(source_ref)).exists() if source_ref.isdigit() else Move
@@ -224,19 +236,20 @@ class StockPicking(models.Model):
             if not targets:
                 unresolved.append(source_ref)
                 continue
-            to_receive.append((targets, qty))
+            serials = {s.strip() for s in item.get("received_serials") or [] if s and s.strip()}
+            lot_name = serials.pop() if len(serials) == 1 else (None if serials else container)
+            lots = self._shippingbo_lots_for(product, qty, {lot_name: qty} if lot_name else None)
+            if lots is False:
+                manual.append(product)
+                continue
+            to_receive.append((targets, qty, lots))
 
         if unresolved:
             self.message_post(body=self.env._("%s: unresolved line(s): %s") % (label, ", ".join(unresolved)))
-        if not to_receive:
+        if manual:
+            self._shippingbo_post_manual_lots(label, manual)
             return
-
-        tracked = [t.product_id for t, _qty in to_receive if t.product_id.tracking != "none"]
-        if tracked:
-            self.message_post(
-                body=self.env._("%s: products tracked by lot, validate the receipt manually: %s")
-                     % (label, ", ".join(p.display_name for p in tracked))
-            )
+        if not to_receive:
             return
 
         self._shippingbo_set_move_quantities(open_moves, to_receive)

@@ -40,18 +40,6 @@ msgstr "%s : validation auto échouée — %s"
 
 #. module: shippingbo_connector
 #. odoo-python
-#: code:addons/shippingbo_connector/models/stock_picking_capsule.py:0
-msgid "%s: products tracked by lot, validate the receipt manually: %s"
-msgstr "%s : articles suivis par lot, réception à valider manuellement : %s"
-
-#. module: shippingbo_connector
-#. odoo-python
-#: code:addons/shippingbo_connector/models/stock_picking_return.py:0
-msgid "%s: products tracked by lot, validate the return manually: %s"
-msgstr "%s : articles suivis par lot, retour à valider manuellement : %s"
-
-#. module: shippingbo_connector
-#. odoo-python
 #: code:addons/shippingbo_connector/models/stock_picking_return.py:0
 msgid "%s: return closed, cancel the remaining backorder manually."
 msgstr "%s : retour clôturé, reliquat restant à annuler manuellement."
@@ -640,3 +628,33 @@ msgstr "Synchronisé avec Shippingbo"
 #: model:ir.model.fields,help:shippingbo_connector.field_stock_picking__shippingbo_warehouse_enabled
 msgid "Deliveries, receipts and returns of this warehouse are sent to Shippingbo."
 msgstr "Les livraisons, réceptions et retours de cet entrepôt sont envoyés à Shippingbo."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid "Shippingbo: lot %s created for %s."
+msgstr "Shippingbo : lot %s créé pour %s."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid ""
+"%s: products tracked by lot or serial number without usable lot numbers, "
+"validate manually: %s"
+msgstr ""
+"%s : articles suivis par lot ou numéro de série sans numéro de lot "
+"exploitable, à valider manuellement : %s"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_stock_picking__shippingbo_container
+msgid "Container Number"
+msgstr "N° de conteneur"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,help:shippingbo_connector.field_stock_picking__shippingbo_container
+msgid ""
+"Sent to Shippingbo with the receipt, and used as lot number at reception "
+"when Shippingbo provides none."
+msgstr ""
+"Envoyé à Shippingbo avec la réception, et utilisé comme numéro de lot à la "
+"réception si Shippingbo n'en fournit pas."

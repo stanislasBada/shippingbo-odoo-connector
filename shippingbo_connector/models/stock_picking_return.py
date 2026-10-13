@@ -148,6 +148,7 @@ class StockPicking(models.Model):
     def _shippingbo_return_qty_by_product(self, return_order, key):
         """Aggregate a return order item list by Odoo product.
 
+        Return (qty by product, unknown Shippingbo product ids, {product: {batch_number: qty}}).
         Received items only carry the Shippingbo product_id: it is resolved through the
         expected items' product_user_ref, then through product.shippingbo_product_id.
         """
@@ -157,6 +158,7 @@ class StockPicking(models.Model):
         }
         Product = self.env["product.product"]
         qty_by_product = {}
+        lots_by_product = {}
         unknown = []
         for item in return_order.get(key) or []:
             sbo_product_id = item.get("product_id")
@@ -169,24 +171,29 @@ class StockPicking(models.Model):
             qty = item.get("quantity")
             qty = float(qty if qty is not None else (item.get("lu_quantity") or 1))
             qty_by_product[product] = qty_by_product.get(product, 0.0) + qty
-        return qty_by_product, unknown
+            batch = (item.get("batch_number") or "").strip()
+            if batch:
+                lots = lots_by_product.setdefault(product, {})
+                lots[batch] = lots.get(batch, 0.0) + qty
+        return qty_by_product, unknown, lots_by_product
 
     def _shippingbo_apply_return_reception(self, return_order, return_pickings):
         """Receive the difference between Shippingbo's received items and what the
         return pickings already received, so that a replayed webhook is a no-op."""
         self.ensure_one()
         label = "Shippingbo return order (id=%s)" % self.shippingbo_return_order_id
-        received, unknown = self._shippingbo_return_qty_by_product(return_order, "return_order_items")
+        received, unknown, received_lots = self._shippingbo_return_qty_by_product(return_order, "return_order_items")
         if unknown:
             self.message_post(body=self.env._("%s: unresolved Shippingbo product(s): %s") % (label, ", ".join(unknown)))
 
         open_moves = self.move_ids.filtered(lambda m: m.state not in ("done", "cancel"))
         done_moves = return_pickings.move_ids.filtered(lambda m: m.state == "done")
         to_receive = []
+        manual = []
         for product, qty in received.items():
+            product_done = done_moves.filtered(lambda m: m.product_id == product)
             already = sum(
-                m.product_uom._compute_quantity(m.quantity, product.uom_id)
-                for m in done_moves.filtered(lambda m: m.product_id == product)
+                m.product_uom._compute_quantity(m.quantity, product.uom_id) for m in product_done
             )
             qty -= already
             if product.uom_id.compare(qty, 0) <= 0:
@@ -195,7 +202,19 @@ class StockPicking(models.Model):
             if not targets:
                 self.message_post(body=self.env._("%s: %s received but not in the return.") % (label, product.display_name))
                 continue
-            to_receive.append((targets, qty))
+            # Per lot, only what was not received yet.
+            lots_left = {}
+            for batch, lot_qty in (received_lots.get(product) or {}).items():
+                done_lot = sum(product_done.move_line_ids.filtered(
+                    lambda ml, b=batch: ml.lot_id.name == b
+                ).mapped("quantity_product_uom"))
+                if product.uom_id.compare(lot_qty - done_lot, 0) > 0:
+                    lots_left[batch] = lot_qty - done_lot
+            lots = self._shippingbo_lots_for(product, qty, lots_left)
+            if lots is False:
+                manual.append(product)
+                continue
+            to_receive.append((targets, qty, lots))
 
         closed = return_order.get("state") == "closed"
         if not to_receive:
@@ -203,12 +222,8 @@ class StockPicking(models.Model):
                 self.message_post(body=self.env._("%s: return closed, cancel the remaining backorder manually.") % label)
             return
 
-        tracked = [t.product_id for t, _qty in to_receive if t.product_id.tracking != "none"]
-        if tracked:
-            self.message_post(
-                body=self.env._("%s: products tracked by lot, validate the return manually: %s")
-                     % (label, ", ".join(p.display_name for p in tracked))
-            )
+        if manual:
+            self._shippingbo_post_manual_lots(label, manual)
             return
 
         self._shippingbo_set_move_quantities(open_moves, to_receive)
@@ -236,7 +251,7 @@ class StockPicking(models.Model):
             return
         picking = done[-1]
         label = "Shippingbo return order (id=%s)" % picking.shippingbo_return_order_id
-        to_scrap, unknown = picking._shippingbo_return_qty_by_product(
+        to_scrap, unknown, scrap_lots = picking._shippingbo_return_qty_by_product(
             return_order, "returned_product_not_restockables"
         )
         if unknown:
@@ -245,29 +260,45 @@ class StockPicking(models.Model):
         Scrap = self.env["stock.scrap"]
         scrapped = Scrap.search([("picking_id", "in", done.ids), ("state", "=", "done")])
         for product, qty in to_scrap.items():
-            qty -= sum(scrapped.filtered(lambda s: s.product_id == product).mapped("scrap_qty"))
-            if product.uom_id.compare(qty, 0) <= 0:
-                continue
-            if product.tracking != "none":
+            if product.tracking == "none":
+                parts = [(False, qty)]
+            elif product.tracking == "lot" and product.uom_id.is_zero(
+                sum((scrap_lots.get(product) or {}).values()) - qty
+            ):
+                parts = [(picking._shippingbo_get_lot(product, batch), lot_qty)
+                         for batch, lot_qty in scrap_lots[product].items()]
+            else:
                 picking.message_post(
                     body=self.env._("%s: %s is not restockable and tracked by lot, scrap it manually.")
                          % (label, product.display_name)
                 )
                 continue
-            try:
-                with self.env.cr.savepoint():
-                    Scrap.create({
-                        "product_id":     product.id,
-                        "product_uom_id": product.uom_id.id,
-                        "scrap_qty":      qty,
-                        "picking_id":     picking.id,
-                        "location_id":    picking.location_dest_id.id,
-                        "origin":         picking.name,
-                    }).do_scrap()
-                picking.message_post(body=self.env._("%s: %s × %s scrapped (not restockable).") % (label, qty, product.display_name))
-            except Exception as e:
-                _logger.exception("ShippingBo: scrap failed for picking %s", picking.name)
-                picking.message_post(body=self.env._("%s: scrap failed for %s — %s") % (label, product.display_name, e))
+            for lot, part_qty in parts:
+                part_qty -= sum(scrapped.filtered(
+                    lambda s, lt=lot: s.product_id == product and (s.lot_id == lt if lt else not s.lot_id)
+                ).mapped("scrap_qty"))
+                if product.uom_id.compare(part_qty, 0) <= 0:
+                    continue
+                vals = {
+                    "product_id":     product.id,
+                    "product_uom_id": product.uom_id.id,
+                    "scrap_qty":      part_qty,
+                    "picking_id":     picking.id,
+                    "location_id":    picking.location_dest_id.id,
+                    "origin":         picking.name,
+                }
+                if lot:
+                    vals["lot_id"] = lot.id
+                try:
+                    with self.env.cr.savepoint():
+                        Scrap.create(vals).do_scrap()
+                    picking.message_post(
+                        body=self.env._("%s: %s × %s scrapped (not restockable).")
+                             % (label, part_qty, product.display_name + (" [%s]" % lot.name if lot else ""))
+                    )
+                except Exception as e:
+                    _logger.exception("ShippingBo: scrap failed for picking %s", picking.name)
+                    picking.message_post(body=self.env._("%s: scrap failed for %s — %s") % (label, product.display_name, e))
 
     @api.model
     def cron_shippingbo_poll_return_orders(self):

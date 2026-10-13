@@ -36,6 +36,8 @@
                                    invisible="picking_type_code != 'incoming' or return_id"/>
                             <field name="shippingbo_return_order_id" readonly="1"
                                    invisible="not return_id"/>
+                            <field name="shippingbo_container"
+                                   invisible="picking_type_code != 'incoming' or return_id"/>
                             <field name="shippingbo_state" readonly="1"/>
                             <field name="shippingbo_shipment_id" readonly="1"
                                    invisible="picking_type_code != 'outgoing'"/>

@@ -412,6 +412,7 @@ class StockPicking(models.Model):
                 items_map = {}
 
         qty_by_product = {}
+        lots_by_product = {}
         unresolved = []
 
         for it in items_ship:
@@ -425,6 +426,11 @@ class StockPicking(models.Model):
                 pid  = meta["product_id"]
                 mult = int(meta.get("units") or 1)
                 qty_by_product[pid] = qty_by_product.get(pid, 0.0) + raw_qty * mult
+                lots = lots_by_product.setdefault(pid, {})
+                for history in it.get("order_item_shipment_picking_histories") or []:
+                    batch = (history.get("batch_number") or "").strip()
+                    if batch:
+                        lots[batch] = lots.get(batch, 0.0) + float(history.get("quantity") or 0) * mult
             else:
                 unresolved.append({"order_item_id": oi_id, "quantity": raw_qty})
 
@@ -442,8 +448,10 @@ class StockPicking(models.Model):
             )
             return
 
+        label = "Shippingbo shipment (id=%s)" % shipment_id
         moves = self.move_ids.filtered(lambda m: m.state not in ("done", "cancel"))
-        touched = self.env["stock.move"]
+        to_ship = []
+        manual = []
         for pid, shipped_qty in qty_by_product.items():
             product_moves = moves.filtered(lambda m: m.product_id.id == pid)
             if not product_moves:
@@ -452,16 +460,20 @@ class StockPicking(models.Model):
                          % (shipment_id, pid)
                 )
                 continue
-            remaining = shipped_qty
-            for mv in product_moves:
-                take = remaining if mv == product_moves[-1] else min(remaining, mv.product_uom_qty)
-                mv.write({"quantity": take, "picked": True})
-                remaining -= take
-            touched |= product_moves
+            product = product_moves.product_id
+            lots = self._shippingbo_lots_for(product, shipped_qty, lots_by_product.get(pid))
+            if lots is False:
+                manual.append(product)
+                continue
+            to_ship.append((product_moves, shipped_qty, lots))
 
-        (moves - touched).write({"quantity": 0, "picked": False})
+        if manual:
+            self._shippingbo_post_manual_lots(label, manual)
+            return
 
-        if not self._shippingbo_validate_with_backorder("Shippingbo shipment (id=%s)" % shipment_id):
+        self._shippingbo_set_move_quantities(moves, to_ship)
+
+        if not self._shippingbo_validate_with_backorder(label):
             return
 
         self.write({
@@ -482,6 +494,13 @@ class StockPicking(models.Model):
                     body=self.env._("Backorder of %s — attached to Shippingbo order %s.")
                          % (self.name, self.shippingbo_order_id)
                 )
+
+    def _shippingbo_post_manual_lots(self, label, products):
+        self.message_post(
+            body=self.env._(
+                "%s: products tracked by lot or serial number without usable lot numbers, validate manually: %s"
+            ) % (label, ", ".join(p.display_name for p in products))
+        )
 
     def _shippingbo_validate_with_backorder(self, label, backorder=True):
         """Validate with the quantities set on the moves; the rest goes to a backorder,
@@ -509,19 +528,83 @@ class StockPicking(models.Model):
             return False
         return self.state == "done"
 
-    @staticmethod
-    def _shippingbo_set_move_quantities(open_moves, to_receive):
-        """to_receive: [(moves, qty in product UoM)]. Untouched open moves go to the backorder."""
+    def _shippingbo_set_move_quantities(self, open_moves, to_receive):
+        """to_receive: [(moves, qty, lots)], qty in product UoM, lots None or [(lot name, qty)].
+
+        Untouched open moves go to the backorder.
+        """
         touched = open_moves.browse()
-        for targets, qty in to_receive:
-            remaining = qty
-            for move in targets:
-                move_qty = move.product_id.uom_id._compute_quantity(remaining, move.product_uom)
-                take = move_qty if move == targets[-1] else min(move_qty, move.product_uom_qty)
-                move.write({"quantity": take, "picked": True})
-                remaining -= move.product_uom._compute_quantity(take, move.product_id.uom_id)
+        for targets, qty, lots in to_receive:
+            if lots:
+                self._shippingbo_set_lot_lines(targets, lots)
+            else:
+                remaining = qty
+                for move in targets:
+                    move_qty = move.product_id.uom_id._compute_quantity(remaining, move.product_uom)
+                    take = move_qty if move == targets[-1] else min(move_qty, move.product_uom_qty)
+                    move.write({"quantity": take, "picked": True})
+                    remaining -= move.product_uom._compute_quantity(take, move.product_id.uom_id)
             touched |= targets
         (open_moves - touched).write({"quantity": 0, "picked": False})
+
+    @staticmethod
+    def _shippingbo_lots_for(product, qty, lots):
+        """Return None when no lot is needed, the [(lot name, qty)] split, or False when
+        the product needs lots that Shippingbo did not provide consistently."""
+        if product.tracking == "none":
+            return None
+        if product.tracking != "lot" or not lots:
+            return False
+        if not product.uom_id.is_zero(sum(lots.values()) - qty):
+            return False
+        return [(name, lot_qty) for name, lot_qty in lots.items() if lot_qty > 0]
+
+    def _shippingbo_get_lot(self, product, name):
+        Lot = self.env["stock.lot"]
+        lot = Lot.search([
+            ("name", "=", name),
+            ("product_id", "=", product.id),
+            ("company_id", "in", (self.company_id.id, False)),
+        ], limit=1)
+        if not lot:
+            lot = Lot.create({"name": name, "product_id": product.id, "company_id": self.company_id.id})
+            self.message_post(
+                body=self.env._("Shippingbo: lot %s created for %s.") % (name, product.display_name)
+            )
+        return lot
+
+    def _shippingbo_set_lot_lines(self, moves, lots):
+        """Replace the move lines of moves (same product) by one line per lot."""
+        product = moves.product_id
+        pending = [[self._shippingbo_get_lot(product, name), qty] for name, qty in lots]
+        moves.move_line_ids.unlink()
+        MoveLine = self.env["stock.move.line"]
+        for move in moves:
+            last = move == moves[-1]
+            capacity = move.product_qty
+            while pending and (last or product.uom_id.compare(capacity, 0) > 0):
+                lot, qty = pending[0]
+                take = qty if last else min(qty, capacity)
+                vals = move._prepare_move_line_vals(quantity=take)
+                vals.update(lot_id=lot.id, picked=True)
+                if move.picking_code == "outgoing":
+                    vals["location_id"] = self._shippingbo_lot_location(move, lot)
+                MoveLine.create(vals)
+                capacity -= take
+                pending[0][1] -= take
+                if product.uom_id.compare(pending[0][1], 0) <= 0:
+                    pending.pop(0)
+        moves.write({"picked": True})
+
+    def _shippingbo_lot_location(self, move, lot):
+        """Ship the lot from the sub-location that actually holds it."""
+        quant = self.env["stock.quant"].search([
+            ("product_id", "=", move.product_id.id),
+            ("lot_id", "=", lot.id),
+            ("location_id", "child_of", move.location_id.id),
+            ("quantity", ">", 0),
+        ], limit=1)
+        return quant.location_id.id or move.location_id.id
 
     @api.model
     def cron_shippingbo_poll(self):
