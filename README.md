@@ -43,6 +43,7 @@ This module makes the two systems behave as one:
 | **Product catalog** | Odoo → ShippingBo | Product variants are created and updated in ShippingBo: reference, EAN, name and weight. |
 | **Stock levels** | ShippingBo → Odoo | Odoo on-hand quantities are aligned with ShippingBo, the physical source of truth, through traceable inventory adjustments. |
 | **Cancellations & changes** | Odoo → ShippingBo | Cancel an order, receipt or return from Odoo. Changing a purchase order updates the expected receipt in ShippingBo. |
+| **Lot tracking** | ShippingBo → Odoo | Lot numbers reported by the warehouse are applied to shipments, receptions and returns. Unknown lots are created, and one container can become one lot. |
 
 ---
 
@@ -81,20 +82,21 @@ flowchart LR
 1. The delivery order becomes **Ready**: in a two-step route, that is when the picking is validated.
 2. It is sent to ShippingBo, automatically or with the **Send to Shippingbo** button.
 3. The ShippingBo order ID and a **Shippingbo Status** are displayed in a dedicated *Shippingbo* tab.
-4. When the warehouse ships, the `Shipment` webhook validates the delivery with the shipped quantities, sets the carrier through a configurable mapping, and stores the tracking number.
+4. When the warehouse ships, the `Shipment` webhook validates the delivery with the shipped quantities **and lot numbers**, sets the carrier through a configurable mapping, and stores the tracking number.
 5. A partial shipment creates a backorder that stays attached to the same ShippingBo order, so the next shipment validates it.
 
 ### Purchase receipts
 
-1. Confirming the purchase order sends its receipt to ShippingBo as a supply capsule (expected products and quantities, supplier, expected date, purchase reference).
+1. Confirming the purchase order sends its receipt to ShippingBo as a supply capsule (expected products and quantities, supplier, expected date, purchase reference, and the **container number** entered on the receipt).
 2. Each reception reported by ShippingBo validates the receipt for the received quantity, and the balance goes to a backorder.
-3. Changing the purchase order before the reception starts replaces the capsule in ShippingBo. Once the reception has started, the change is flagged instead of overwriting warehouse data.
+3. For lot-tracked products, the lot is the one reported by ShippingBo, or the **container number**: one container, one lot.
+4. Changing the purchase order before the reception starts replaces the capsule in ShippingBo. Once the reception has started, the change is flagged instead of overwriting warehouse data.
 
 ### Customer returns
 
 1. Creating a return from a delivery sent to ShippingBo announces it as a return order, linked to the original ShippingBo order, with only the returned lines.
-2. When the warehouse receives it, the return is validated with the **physically received** quantities, not the declared ones.
-3. Items flagged **not restockable** are automatically scrapped in Odoo, so damaged goods never reach sellable stock.
+2. When the warehouse receives it, the return is validated with the **physically received** quantities and lots, not the declared ones.
+3. Items flagged **not restockable** are automatically scrapped in Odoo, on their lot, so damaged goods never reach sellable stock.
 4. Cancelling a return that was not received yet cancels it in ShippingBo (for example, a parcel lost in transit).
 
 ### Products and stock
@@ -120,12 +122,14 @@ flowchart LR
 - Business events are posted in the transfer's chatter.
 
 **Errors you can act on.**
+- Incomplete delivery addresses are caught **before** sending, with the missing fields listed on the transfer.
 - A rejected send sets the transfer to *Error*, with ShippingBo's message in the chatter.
+- When the warehouse cannot process an order (for example, no stock available), ShippingBo's reason is shown on the transfer.
 - A business user fixes the data and clicks **Send to Shippingbo** again, without needing technical logs.
 
 **Safe defaults.**
 - Unknown stock values are never read as zero.
-- Products tracked by lot are never validated blindly.
+- Lot-tracked products are validated only when ShippingBo's lot numbers add up to the quantity. Otherwise the user is asked to validate manually.
 - A failed automatic send never blocks the stock reservation that triggered it.
 
 **Multi-warehouse ready.** Only warehouses flagged *Synced with Shippingbo* exchange data. A second warehouse run by another logistics provider is left untouched.
@@ -173,6 +177,7 @@ Each flow can also be triggered manually from the transfer with the **Send to Sh
 - **Products:** tick *Shippingbo Stock Sync* in the *Inventory* tab to include a product in the catalog and stock synchronization. The internal reference is the key shared with ShippingBo.
 - **Carriers:** *Settings › Shippingbo › Carrier Mapping* links Odoo delivery methods to ShippingBo carrier names, in both directions.
 - **Suppliers:** fill in the supplier **Reference**. It is used as the ShippingBo supplier code, with the supplier name as a fallback.
+- **Lots:** enable *Lots & Serial Numbers* in the Inventory settings and set the products to *By Lots*. On purchase receipts, fill in the **Container Number** in the *Shippingbo* tab: it is sent to ShippingBo and used as the lot when ShippingBo reports none.
 
 ### 4. Webhooks in ShippingBo
 
@@ -213,7 +218,7 @@ https://<your-odoo-domain>/shippingbo/webhook
 
 | Model | Fields added |
 |---|---|
-| `stock.picking` | `shippingbo_order_id`, `shippingbo_capsule_id`, `shippingbo_return_order_id`, `shippingbo_shipment_id`, `shippingbo_state`, `shippingbo_items_map`, `shippingbo_earliest_ship_date` |
+| `stock.picking` | `shippingbo_order_id`, `shippingbo_capsule_id`, `shippingbo_return_order_id`, `shippingbo_shipment_id`, `shippingbo_state`, `shippingbo_items_map`, `shippingbo_earliest_ship_date`, `shippingbo_container` |
 | `product.template` | `shippingbo_stock_sync` |
 | `product.product` | `shippingbo_product_id`, `shippingbo_last_sync` |
 | `stock.warehouse` | `shippingbo_enabled` |
@@ -249,7 +254,7 @@ The module is generic and can be extended without forking. Override these method
 
 The connector covers the full order-to-delivery, purchase-to-receipt and return cycles. These items are on the roadmap:
 
-- **Lot and batch numbers** on shipments, receptions and returns. Products tracked by lot are currently validated manually, and the user is told so in the chatter.
+- **Serial numbers**. Lots are supported; products tracked by unique serial number are currently validated manually, and the user is told so in the chatter.
 - **Stock adjustments and scraps entered in Odoo** pushed to ShippingBo.
 - **Webhook authentication** with a shared secret.
 - **Address change** and **order edit** after a delivery has been sent.

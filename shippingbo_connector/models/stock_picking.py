@@ -112,6 +112,19 @@ class StockPicking(models.Model):
             )
             return
 
+        partner = self.partner_id or so.partner_shipping_id
+        missing = [
+            partner._fields[fname]._description_string(self.env)
+            for fname in ("street", "zip", "city", "country_id") if not partner[fname]
+        ]
+        if missing:
+            self.write({"shippingbo_state": "error"})
+            self.message_post(
+                body=self.env._("Shippingbo: incomplete delivery address (missing: %s), delivery not sent.")
+                     % ", ".join(missing)
+            )
+            return
+
         payload, items_meta = self._build_shippingbo_payload(so)
         if not payload["order"].get("order_items_attributes"):
             self.message_post(body=self.env._("Shippingbo: no line to send (no 'consu' product with a quantity > 0)."))
@@ -217,7 +230,8 @@ class StockPicking(models.Model):
                 "total_price_currency": currency,
                 "total_tax_cents":      int(so.amount_tax * 100),
                 "total_tax_currency":   currency,
-                "total_weight": total_weight,
+                # kg -> g
+                "total_weight": int(round(total_weight * 1000)),
                 "relay_ref": self._shippingbo_relay_ref(),
                 "mapped_carrier":           mapped_carrier,
                 "chosen_delivery_service":  mapped_carrier,
@@ -361,10 +375,16 @@ class StockPicking(models.Model):
             return
         targets = pickings.filtered(lambda p: p.state not in ("done", "cancel")) or pickings[-1]
         state = SHIPPINGBO_ORDER_STATE_MAP.get(remote_state)
+        error = (order.get("dispatch_error_message") or "").strip()
         for picking in targets:
             if state and picking.shippingbo_state != state:
                 picking.write({"shippingbo_state": state})
-            picking.message_post(body=self.env._("Shippingbo: order status → %s") % remote_state)
+            if error:
+                picking.message_post(
+                    body=self.env._("⚠️ Shippingbo: order status → %s — %s") % (remote_state, error)
+                )
+            else:
+                picking.message_post(body=self.env._("Shippingbo: order status → %s") % remote_state)
 
     def _process_shipment_webhook(self, shipment, tracking_only=False):
         self.ensure_one()

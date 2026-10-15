@@ -70,7 +70,7 @@
             <div style="height: 100%; background-color: #FFFFFF; border-radius: 10px; padding: 22px; border-top: 4px solid #2EAD7A;">
                 <p style="color: #1E8A5E; font-size: 12px; font-weight: 700; letter-spacing: 1px; margin: 0 0 6px;">SHIPPINGBO → ODOO</p>
                 <h4 style="color: #111827; font-weight: 600;">Shipments &amp; tracking</h4>
-                <p style="color: #374151; margin: 0; line-height: 1.6;">Deliveries are validated with the shipped quantities, carrier and tracking number. Partial shipments create a backorder.</p>
+                <p style="color: #374151; margin: 0; line-height: 1.6;">Deliveries are validated with the shipped quantities, lot numbers, carrier and tracking number. Partial shipments create a backorder.</p>
             </div>
         </div>
         <div class="col-md-6 col-lg-4" style="margin-bottom: 16px;">
@@ -84,7 +84,7 @@
             <div style="height: 100%; background-color: #FFFFFF; border-radius: 10px; padding: 22px; border-top: 4px solid #8A6BE0;">
                 <p style="color: #6A4FC4; font-size: 12px; font-weight: 700; letter-spacing: 1px; margin: 0 0 6px;">BOTH WAYS</p>
                 <h4 style="color: #111827; font-weight: 600;">Purchase receipts</h4>
-                <p style="color: #374151; margin: 0; line-height: 1.6;">Confirmed purchase orders are announced to the warehouse. Receptions validate the receipt, and partial ones keep a backorder for the balance.</p>
+                <p style="color: #374151; margin: 0; line-height: 1.6;">Confirmed purchase orders are announced to the warehouse, with their container number. Receptions validate the receipt with its lots, and partial ones keep a backorder for the balance.</p>
             </div>
         </div>
         <div class="col-md-6 col-lg-4" style="margin-bottom: 16px;">
@@ -171,11 +171,11 @@
         </div>
         <div class="col-md-6" style="margin-bottom: 20px;">
             <h5 style="color: #111827; font-weight: 700;">✔ Errors your team can fix</h5>
-            <p style="color: #374151; line-height: 1.6; margin: 0;">A rejected send flags the document with ShippingBo's message. Fix the data, click <em>Send to Shippingbo</em> again, with no technical access needed.</p>
+            <p style="color: #374151; line-height: 1.6; margin: 0;">A rejected send, or an order the warehouse cannot process (for example, no stock), flags the document with ShippingBo's reason. Fix the data, click <em>Send to Shippingbo</em> again, with no technical access needed.</p>
         </div>
         <div class="col-md-6" style="margin-bottom: 20px;">
             <h5 style="color: #111827; font-weight: 700;">✔ Safe defaults</h5>
-            <p style="color: #374151; line-height: 1.6; margin: 0;">Unknown stock is never read as zero, and lot-tracked products are never validated blindly. A failed automatic send never blocks a reservation.</p>
+            <p style="color: #374151; line-height: 1.6; margin: 0;">Incomplete addresses are caught before sending, unknown stock is never read as zero, and lot-tracked products are validated only when the lots add up. A failed automatic send never blocks a reservation.</p>
         </div>
         <div class="col-md-6" style="margin-bottom: 20px;">
             <h5 style="color: #111827; font-weight: 700;">✔ Extensible without forking</h5>
@@ -251,7 +251,7 @@
         <div class="col-md-4" style="margin-bottom: 16px;">
             <h5 style="color: #111827; font-weight: 600;">On the roadmap</h5>
             <ul style="color: #374151; line-height: 1.8; padding-left: 18px;">
-                <li>Lot / batch numbers on shipments, receptions and returns (lot-tracked products are currently validated manually)</li>
+                <li>Serial numbers (lots are supported; serial-tracked products are currently validated manually)</li>
                 <li>Odoo stock adjustments and scraps pushed to ShippingBo</li>
                 <li>Webhook authentication by shared secret</li>
             </ul>

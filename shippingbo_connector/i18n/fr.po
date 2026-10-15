@@ -658,3 +658,15 @@ msgid ""
 msgstr ""
 "Envoyé à Shippingbo avec la réception, et utilisé comme numéro de lot à la "
 "réception si Shippingbo n'en fournit pas."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid "Shippingbo: incomplete delivery address (missing: %s), delivery not sent."
+msgstr "Shippingbo : adresse de livraison incomplète (manquant : %s), BL non envoyé."
+
+#. module: shippingbo_connector
+#. odoo-python
+#: code:addons/shippingbo_connector/models/stock_picking.py:0
+msgid "⚠️ Shippingbo: order status → %s — %s"
+msgstr "⚠️ Shippingbo : statut commande → %s — %s"
