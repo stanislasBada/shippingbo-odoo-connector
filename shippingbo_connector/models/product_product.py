@@ -19,6 +19,11 @@ class ProductProduct(models.Model):
         string="Last Shippingbo Sync",
         copy=False,
     )
+    shippingbo_linked_supplier_ids = fields.Char(
+        string="Shippingbo Warehouses",
+        copy=False,
+        help="Shippingbo warehouses (supplier IDs) in which this product has been declared.",
+    )
 
     @api.model
     def cron_shippingbo_sync_products(self):
@@ -34,7 +39,8 @@ class ProductProduct(models.Model):
         Without force, only variants modified since their last sync are processed.
         """
         api_client = self.env["shippingbo.api"]
-        todo = self if force else self.filtered(lambda p: p._shippingbo_needs_sync())
+        supplier_ids = self._shippingbo_supplier_ids()
+        todo = self if force else self.filtered(lambda p: p._shippingbo_needs_sync(supplier_ids))
         _logger.info("=== ShippingBo product sync: %d variant(s) to process ===", len(todo))
 
         success, skipped, errors = 0, 0, 0
@@ -58,10 +64,47 @@ class ProductProduct(models.Model):
             success, skipped, errors,
         )
 
-    def _shippingbo_needs_sync(self):
+    def _shippingbo_needs_sync(self, supplier_ids=()):
         self.ensure_one()
         last = self.shippingbo_last_sync
-        return not last or last < self.write_date or last < self.product_tmpl_id.write_date
+        return (
+            not last or last < self.write_date or last < self.product_tmpl_id.write_date
+            or bool(set(supplier_ids) - set(self._shippingbo_linked_suppliers()))
+        )
+
+    @api.model
+    def _shippingbo_supplier_ids(self):
+        raw = self.env["ir.config_parameter"].sudo().get_param("shippingbo.supplier_ids") or ""
+        return [int(x) for x in raw.replace(";", ",").split(",") if x.strip().isdigit()]
+
+    def _shippingbo_linked_suppliers(self):
+        return [int(x) for x in (self.shippingbo_linked_supplier_ids or "").split(",") if x.isdigit()]
+
+    def _shippingbo_link_suppliers(self, api_client, sbo_id):
+        """Declare the product in each configured Shippingbo warehouse (supplier).
+
+        The warehouse creates the product when its catalog auto-creation option is enabled.
+        """
+        linked = self._shippingbo_linked_suppliers()
+        for supplier_id in self._shippingbo_supplier_ids():
+            if supplier_id in linked:
+                continue
+            res = api_client._shippingbo_request(
+                "GET", "/supplier_products?search[supplier_id__eq]=%s&search[product_id__eq]=%s"
+                % (supplier_id, sbo_id)
+            )
+            if not (res or {}).get("supplier_products"):
+                status, res = api_client._shippingbo_call("POST", "/supplier_products", {
+                    "supplier_product": {
+                        "product_id":   sbo_id,
+                        "supplier_id":  supplier_id,
+                        "supplier_ref": self.default_code,
+                    }
+                })
+                if status >= 300:
+                    raise ValueError("warehouse %s link failed: %s" % (supplier_id, res))
+            linked.append(supplier_id)
+        self.shippingbo_linked_supplier_ids = ",".join(str(x) for x in linked) or False
 
     def _shippingbo_sync_one(self, api_client):
         self.ensure_one()
@@ -80,10 +123,9 @@ class ProductProduct(models.Model):
         if not self._shippingbo_extract_id(res):
             raise ValueError("unexpected Shippingbo response: %s" % res)
 
-        self.write({
-            "shippingbo_product_id": sbo_id,
-            "shippingbo_last_sync": fields.Datetime.now(),
-        })
+        self.write({"shippingbo_product_id": sbo_id})
+        self._shippingbo_link_suppliers(api_client, sbo_id)
+        self.write({"shippingbo_last_sync": fields.Datetime.now()})
         return True
 
     def _shippingbo_find_product_id(self, api_client):

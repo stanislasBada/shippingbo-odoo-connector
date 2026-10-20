@@ -30,6 +30,10 @@
                                domain="[('usage', '=', 'internal')]"
                                options="{'no_create': True}"/>
                     </setting>
+                    <setting string="Shippingbo Warehouses"
+                             help="Shippingbo warehouse IDs (suppliers) in which synced products are declared, comma-separated.">
+                        <field name="shippingbo_supplier_ids" placeholder="2983"/>
+                    </setting>
                 </block>
                 <block title="Deliveries">
                     <setting string="Auto-send ready deliveries"

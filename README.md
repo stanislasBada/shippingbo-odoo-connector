@@ -102,6 +102,7 @@ flowchart LR
 ### Products and stock
 
 - **Catalog:** every hour, variants flagged *Shippingbo Stock Sync* and modified since their last sync are created or updated in ShippingBo. The ShippingBo product ID is stored on the variant.
+- **Warehouses:** each new product is also declared in the configured ShippingBo warehouses (`supplier_products`). When the warehouse has catalog auto-creation enabled, the product is created in its WMS automatically, so orders never fail on an unknown product.
 - **Stock:** every day, ShippingBo stock levels are applied to Odoo as **inventory adjustments**, so every correction stays visible in the stock moves history.
 
 ---
@@ -168,6 +169,7 @@ The ShippingBo application needs read/write access to **Order**, **Product**, **
 | Auto-send purchase receipts | Send receipts when a purchase order is confirmed |
 | Auto-send returns | Send returns created from a delivery that was sent to ShippingBo |
 | Stock Location | Odoo location aligned with ShippingBo stock |
+| Shippingbo Warehouses | ShippingBo warehouse IDs (suppliers) in which synced products are declared, e.g. `2983` |
 
 Each flow can also be triggered manually from the transfer with the **Send to Shippingbo** button.
 
@@ -220,7 +222,7 @@ https://<your-odoo-domain>/shippingbo/webhook
 |---|---|
 | `stock.picking` | `shippingbo_order_id`, `shippingbo_capsule_id`, `shippingbo_return_order_id`, `shippingbo_shipment_id`, `shippingbo_state`, `shippingbo_items_map`, `shippingbo_earliest_ship_date`, `shippingbo_container` |
 | `product.template` | `shippingbo_stock_sync` |
-| `product.product` | `shippingbo_product_id`, `shippingbo_last_sync` |
+| `product.product` | `shippingbo_product_id`, `shippingbo_last_sync`, `shippingbo_linked_supplier_ids` |
 | `stock.warehouse` | `shippingbo_enabled` |
 | `shippingbo.carrier.mapping` | New model: Odoo carrier ↔ ShippingBo carrier name |
 
@@ -230,6 +232,7 @@ https://<your-odoo-domain>/shippingbo/webhook
 |---|---|
 | `POST /addresses`, `POST /orders`, `PATCH /orders/{id}` | Deliveries, cancellation |
 | `GET/POST /products`, `PATCH /products/{id}` | Catalog and stock |
+| `GET/POST /supplier_products` | Product declaration in the warehouses |
 | `GET/POST /supply_capsules`, `GET/DELETE /supply_capsules/{id}` | Purchase receipts |
 | `POST /return_orders`, `GET/PATCH /return_orders/{id}` | Customer returns |
 

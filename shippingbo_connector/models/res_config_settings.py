@@ -31,6 +31,11 @@ class ResConfigSettings(models.TransientModel):
         config_parameter="shippingbo.stock_location_id",
         help="Stock location used as source for the nightly ShippingBo stock synchronization.",
     )
+    shippingbo_supplier_ids = fields.Char(
+        string="Shippingbo Warehouse IDs",
+        config_parameter="shippingbo.supplier_ids",
+        help="Comma-separated Shippingbo supplier IDs of the warehouses in which synced products are declared.",
+    )
     shippingbo_auto_send_on_ready = fields.Boolean(
         string="Auto-send ready deliveries",
         config_parameter="shippingbo.auto_send_on_ready",

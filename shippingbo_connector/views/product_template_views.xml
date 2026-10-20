@@ -34,6 +34,7 @@
                 <group string="Shippingbo" name="shippingbo">
                     <field name="shippingbo_product_id" readonly="1"/>
                     <field name="shippingbo_last_sync" readonly="1"/>
+                    <field name="shippingbo_linked_supplier_ids" readonly="1"/>
                 </group>
             </xpath>
         </field>

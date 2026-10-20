@@ -670,3 +670,37 @@ msgstr "Shippingbo : adresse de livraison incomplète (manquant : %s), BL non en
 #: code:addons/shippingbo_connector/models/stock_picking.py:0
 msgid "⚠️ Shippingbo: order status → %s — %s"
 msgstr "⚠️ Shippingbo : statut commande → %s — %s"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_product_product__shippingbo_linked_supplier_ids
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.res_config_settings_view_form_shippingbo
+msgid "Shippingbo Warehouses"
+msgstr "Entrepôts Shippingbo"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,help:shippingbo_connector.field_product_product__shippingbo_linked_supplier_ids
+msgid "Shippingbo warehouses (supplier IDs) in which this product has been declared."
+msgstr "Entrepôts Shippingbo (ID fournisseur) dans lesquels cet article a été déclaré."
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,field_description:shippingbo_connector.field_res_config_settings__shippingbo_supplier_ids
+msgid "Shippingbo Warehouse IDs"
+msgstr "ID des entrepôts Shippingbo"
+
+#. module: shippingbo_connector
+#: model:ir.model.fields,help:shippingbo_connector.field_res_config_settings__shippingbo_supplier_ids
+msgid ""
+"Comma-separated Shippingbo supplier IDs of the warehouses in which synced "
+"products are declared."
+msgstr ""
+"ID fournisseur Shippingbo des entrepôts dans lesquels les articles "
+"synchronisés sont déclarés, séparés par des virgules."
+
+#. module: shippingbo_connector
+#: model_terms:ir.ui.view,arch_db:shippingbo_connector.res_config_settings_view_form_shippingbo
+msgid ""
+"Shippingbo warehouse IDs (suppliers) in which synced products are declared, "
+"comma-separated."
+msgstr ""
+"ID des entrepôts Shippingbo (fournisseurs) dans lesquels les articles "
+"synchronisés sont déclarés, séparés par des virgules."
