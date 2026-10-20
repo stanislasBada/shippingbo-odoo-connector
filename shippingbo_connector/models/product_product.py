@@ -89,19 +89,20 @@ class ProductProduct(models.Model):
         for supplier_id in self._shippingbo_supplier_ids():
             if supplier_id in linked:
                 continue
-            res = api_client._shippingbo_request(
-                "GET", "/supplier_products?search[supplier_id__eq]=%s&search[product_id__eq]=%s"
-                % (supplier_id, sbo_id)
-            )
-            if not (res or {}).get("supplier_products"):
-                status, res = api_client._shippingbo_call("POST", "/supplier_products", {
-                    "supplier_product": {
-                        "product_id":   sbo_id,
-                        "supplier_id":  supplier_id,
-                        "supplier_ref": self.default_code,
-                    }
-                })
-                if status >= 300:
+            status, res = api_client._shippingbo_call("POST", "/supplier_products", {
+                "supplier_product": {
+                    "product_id":   sbo_id,
+                    "supplier_id":  supplier_id,
+                    "supplier_ref": self.default_code,
+                }
+            })
+            # A refusal usually means the link already exists: only then check it.
+            if status >= 300:
+                existing = api_client._shippingbo_request(
+                    "GET", "/supplier_products?search[supplier_id__eq]=%s&search[product_id__eq]=%s"
+                    % (supplier_id, sbo_id)
+                )
+                if not (existing or {}).get("supplier_products"):
                     raise ValueError("warehouse %s link failed: %s" % (supplier_id, res))
             linked.append(supplier_id)
         self.shippingbo_linked_supplier_ids = ",".join(str(x) for x in linked) or False
