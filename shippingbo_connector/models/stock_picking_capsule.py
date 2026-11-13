@@ -79,11 +79,14 @@ class StockPicking(models.Model):
             }
             for move in moves if move.product_id.default_code
         ]
+        # Destination on the Shippingbo side: the configured supplier id, only when unambiguous.
+        supplier_ids = self.env["product.product"]._shippingbo_supplier_ids()
         payload = {
             "supply_capsule": {
                 "source_ref":    self.name,
                 "external_ref":  self.purchase_id.name or None,
                 "container":     self.shippingbo_container or None,
+                "supplier_id":   supplier_ids[0] if len(supplier_ids) == 1 else None,
                 "supplier_name": partner.name,
                 "supplier_code": partner.ref or partner.name,
                 "expected_delivery_date": (

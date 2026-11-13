@@ -2,8 +2,10 @@ import json
 import logging
 import traceback
 
+from psycopg2 import OperationalError
+
 from odoo import SUPERUSER_ID, http
-from odoo.http import request
+from odoo.http import Response, request
 
 _logger = logging.getLogger(__name__)
 
@@ -12,7 +14,11 @@ class ShippingboWebhook(http.Controller):
 
     @http.route("/shippingbo/webhook", type="http", auth="public", methods=["POST"], csrf=False)
     def handle(self, **kwargs):
-        """Always answer 200 so that Shippingbo does not retry."""
+        """Answer 200 once processed, so that Shippingbo does not retry.
+
+        Transient database conflicts (serialization failure, deadlock) are answered with 503:
+        the change was rolled back, so Shippingbo must send the webhook again.
+        """
         raw_body = request.httprequest.get_data()
         try:
             payload = json.loads(raw_body or b"{}")
@@ -47,6 +53,14 @@ class ShippingboWebhook(http.Controller):
                     _logger.info("ShippingBo webhook: unhandled object_class %s", object_class)
                     self._log("WARNING", "Unhandled: %s" % summary, raw_body)
                     return request.make_json_response({"status": "ignored"})
+        except OperationalError as e:
+            # SerializationFailure / DeadlockDetected are subclasses of OperationalError.
+            _logger.warning("ShippingBo webhook: transient DB conflict on %s, asking for retry: %s",
+                            object_class, e)
+            self._log("WARNING", "Transient DB conflict, retry requested: %s" % summary, raw_body)
+            return Response(
+                json.dumps({"status": "retry"}), status=503, mimetype="application/json",
+            )
         except Exception:
             _logger.exception("ShippingBo webhook: error while processing %s", object_class)
             self._log("ERROR", "Error: %s\n%s" % (summary, traceback.format_exc()), raw_body)
