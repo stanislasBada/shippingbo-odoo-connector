@@ -7,6 +7,8 @@ from psycopg2 import OperationalError
 from odoo import SUPERUSER_ID, http
 from odoo.http import Response, request
 
+from ..exceptions import ShippingboRetryLater
+
 _logger = logging.getLogger(__name__)
 
 
@@ -53,21 +55,43 @@ class ShippingboWebhook(http.Controller):
                     _logger.info("ShippingBo webhook: unhandled object_class %s", object_class)
                     self._log("WARNING", "Unhandled: %s" % summary, raw_body)
                     return request.make_json_response({"status": "ignored"})
-        except OperationalError as e:
+        except (OperationalError, ShippingboRetryLater) as e:
             # SerializationFailure / DeadlockDetected are subclasses of OperationalError.
-            _logger.warning("ShippingBo webhook: transient DB conflict on %s, asking for retry: %s",
-                            object_class, e)
-            self._log("WARNING", "Transient DB conflict, retry requested: %s" % summary, raw_body)
+            # ShippingboRetryLater: the change cannot be applied yet (e.g. the order link is not saved).
+            _logger.warning("ShippingBo webhook: retry requested on %s: %s", object_class, e)
+            self._log("WARNING", "Retry requested: %s (%s)" % (summary, e), raw_body)
             return Response(
                 json.dumps({"status": "retry"}), status=503, mimetype="application/json",
             )
-        except Exception:
+        except Exception as exc:
             _logger.exception("ShippingBo webhook: error while processing %s", object_class)
             self._log("ERROR", "Error: %s\n%s" % (summary, traceback.format_exc()), raw_body)
+            self._alert_pickings(Picking, object_class, obj, exc)
             return request.make_json_response({"status": "error"})
 
         self._log("INFO", "Processed: %s" % summary, raw_body)
         return request.make_json_response({"status": "ok"})
+
+    @staticmethod
+    def _alert_pickings(Picking, object_class, obj, exc):
+        """Post the error in the chatter of the related picking, so that it is visible in Odoo.
+        Never fails the response: the alert is best effort."""
+        try:
+            if object_class == "Order":
+                pickings = Picking.search([("shippingbo_order_id", "=", obj.get("id"))])
+            elif object_class == "Shipment":
+                pickings = Picking.search([("shippingbo_order_id", "=", obj.get("order_id"))])
+            elif object_class == "SupplyCapsule":
+                pickings = Picking.search([("shippingbo_capsule_id", "=", obj.get("id"))])
+            else:
+                return
+            for picking in pickings:
+                picking.message_post(
+                    body=Picking.env._("⚠️ Shippingbo: webhook %s not applied (%s). Check the connector logs.")
+                         % (object_class, exc)
+                )
+        except Exception:
+            _logger.exception("ShippingBo webhook: could not post the error alert")
 
     @staticmethod
     def _log(level, message, raw_body):

@@ -3,6 +3,8 @@ import logging
 
 from odoo import api, fields, models
 
+from ..exceptions import ShippingboRetryLater
+
 _logger = logging.getLogger(__name__)
 
 # Unknown states are posted in the chatter without changing shippingbo_state.
@@ -371,6 +373,9 @@ class StockPicking(models.Model):
             return
         pickings = self.search([("shippingbo_order_id", "=", order_id)], order="id")
         if not pickings:
+            if order.get("origin") == "ODOO":
+                # The order was created by Odoo: its link may not be saved yet, ask Shippingbo to resend.
+                raise ShippingboRetryLater("order %s: no picking yet" % order_id)
             _logger.warning("ShippingBo webhook: no picking for order %s", order_id)
             return
         targets = pickings.filtered(lambda p: p.state not in ("done", "cancel")) or pickings[-1]
@@ -410,7 +415,8 @@ class StockPicking(models.Model):
                 )
         if tracking_ref and tracking_ref != self.carrier_tracking_ref:
             self.write({"carrier_tracking_ref": tracking_ref})
-        if tracking_url:
+        # SBO answers "without_tracking" when the carrier gives no tracking page: not a link to post.
+        if tracking_url and "without_tracking" not in tracking_url:
             self.message_post(body=self.env._("Shippingbo: parcel tracking %s") % tracking_url)
 
         if tracking_only or self.state in ("done", "cancel"):
